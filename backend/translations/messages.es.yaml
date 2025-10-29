@@ -1,0 +1,12 @@
+This value is not a valid email address.: No es una dirección de email válida
+This value should be {{ limit }} or more.: El valor debería ser limit o más.
+This value should be between {{ min }} and {{ max }}.: El valor debería estar comprendido entre min y max.
+This value is not a valid date.: No es una fecha válida
+This value is not a valid datetime.: No es una fecha y hora válida
+This value should not be blank.: No debería estar en blanco
+This value is too short. It should have {{ limit }} character or more.: El Valor es demasiado corto debería ser limit o más.
+This field is missing.: No se encontró el campo requerido
+This field was not expected.: Se encontró un campo inesperado
+This value should be of type {{ type }}.: Este valor debería ser de tipo type
+This value is not a valid URL.: No es una dirección URL Válida.
+The value you selected is not a valid choice.: El valor seleccionado value no es válido.
