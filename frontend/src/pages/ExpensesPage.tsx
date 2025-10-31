@@ -168,8 +168,8 @@ const ExpensesPage: React.FC = () => {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Registro de Egresos</h1>
-          <p className="mt-1 text-gray-600">
+          <h1 className="text-2xl font-bold text-white">Registro de Egresos</h1>
+          <p className="mt-2 text-orange-400">
             Total gastos: <span className="font-medium">{formatCurrency(totalExpenses)}</span>
           </p>
         </div>
@@ -198,7 +198,7 @@ const ExpensesPage: React.FC = () => {
                   </div>
                   <input
                     type="text"
-                    className="pl-10 form-input w-full max-w-xs"
+                    className="pl-10 form-input w-full max-w-xs text-gray-700"
                     placeholder="Buscar por descripción o categoría"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
@@ -386,7 +386,7 @@ const ExpensesPage: React.FC = () => {
                           <input
                             type="number"
                             id="amount"
-                            className="form-input block w-full pl-10"
+                            className="form-input block w-full pl-10 text-gray-700"
                             placeholder="0.00"
                             value={amount}
                             onChange={(e) => setAmount(e.target.value)}
@@ -402,7 +402,7 @@ const ExpensesPage: React.FC = () => {
                         </label>
                         <select
                             id="category"
-                            className="form-input block w-full"
+                            className="form-input block w-full text-gray-700"
                             value={category}
                             onChange={(e) => setCategory(Number(e.target.value))}
                         >
@@ -421,7 +421,7 @@ const ExpensesPage: React.FC = () => {
                         </label>
                         <textarea
                           id="description"
-                          className="form-input block w-full"
+                          className="form-input block w-full text-gray-700"
                           rows={3}
                           placeholder="Ingrese una descripción del gasto"
                           value={description}

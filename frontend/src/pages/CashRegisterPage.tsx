@@ -154,7 +154,7 @@ const CashRegisterPage: React.FC = () => {
   if (loading) {
     return (
         <div className="flex justify-center items-center h-screen">
-          <p className="text-gray-600 text-lg">Cargando caja...</p>
+          <p className="text-white text-lg">Cargando caja...</p>
         </div>
     );
   }
@@ -162,7 +162,7 @@ const CashRegisterPage: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-        <h1 className="text-2xl font-bold text-gray-800">Caja Registradora</h1>
+        <h1 className="text-2xl font-bold text-white">Caja Registradora</h1>
         <div className="mt-4 md:mt-0">
           {!cashRegister || !cashRegister.isOpen ? (
             <div className="flex items-center text-sm font-medium text-red-700 bg-red-100 px-3 py-1 rounded-full">
@@ -181,9 +181,9 @@ const CashRegisterPage: React.FC = () => {
       {cashRegister && cashRegister.isOpen ? (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="md:col-span-2">
-            <div className="bg-white rounded-xl shadow-md overflow-hidden">
+            <div className="bg-cyan-700 rounded-xl shadow-md overflow-hidden">
               <div className="px-5 py-4 flex justify-between items-center border-b border-gray-200">
-                <h2 className="text-lg font-semibold text-gray-800">Resumen de Caja</h2>
+                <h2 className="text-lg font-semibold text-white">Resumen de Caja</h2>
                 <div className="flex space-x-3">
                   <button
                     onClick={() => openMovementModal('in')}
@@ -314,9 +314,9 @@ const CashRegisterPage: React.FC = () => {
           </div>
           
           <div className="md:col-span-1">
-            <div className="bg-white rounded-xl shadow-md overflow-hidden h-fit">
+            <div className="bg-cyan-700 rounded-xl shadow-md overflow-hidden h-fit">
               <div className="px-5 py-4 border-b border-gray-200">
-                <h2 className="text-lg font-semibold text-gray-800">Acciones</h2>
+                <h2 className="text-lg font-semibold text-white">Acciones</h2>
               </div>
               
               <div className="p-5">
@@ -556,7 +556,7 @@ const CashRegisterPage: React.FC = () => {
                         <input
                           type="number"
                           id="movementAmount"
-                          className="form-input w-full"
+                          className="form-input w-full text-gray-700"
                           value={movementAmount}
                           onChange={(e) => setMovementAmount(e.target.value)}
                           min="0"
@@ -571,7 +571,7 @@ const CashRegisterPage: React.FC = () => {
                         <input
                           type="text"
                           id="movementReason"
-                          className="form-input w-full"
+                          className="form-input w-full text-gray-700"
                           value={movementReason}
                           onChange={(e) => setMovementReason(e.target.value)}
                           placeholder={

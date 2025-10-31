@@ -199,7 +199,7 @@ const AdminPage: React.FC = () => {
         <div className="space-y-6">
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-                <h1 className="text-2xl font-bold text-gray-800">Administración de Usuarios</h1>
+                <h1 className="text-2xl font-bold text-white">Administración de Usuarios</h1>
                 <button
                     className="btn bg-[#FF6B35] text-white flex items-center space-x-2 mt-4 md:mt-0"
                     onClick={() => { setEditingUser(null); setIsModalOpen(true); }}
@@ -218,7 +218,7 @@ const AdminPage: React.FC = () => {
                         </div>
                         <input
                             type="text"
-                            className="pl-10 form-input w-full max-w-xs"
+                            className="pl-10 form-input w-full max-w-xs text-gray-700"
                             placeholder="Buscar por nombre o email"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
@@ -260,11 +260,11 @@ const AdminPage: React.FC = () => {
                             <tbody className="bg-white divide-y divide-gray-200">
                             {sortedUsers.map(user => (
                                 <tr key={user.id} className="hover:bg-gray-50">
-                                    <td className="px-6 py-4 whitespace-nowrap">{user.id}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap">{user.nombre}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap">{user.email}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap">{user.roles}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
+                                    <td className="px-6 py-4 whitespace-nowrap text-gray-700">{user.id}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-gray-700">{user.nombre}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-gray-700">{user.email}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-gray-700">{user.roles}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-gray-700">
                                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${user.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                                                 {user.status === 'active' ? 'Activo' : 'Inactivo'}
                                             </span>
@@ -292,14 +292,14 @@ const AdminPage: React.FC = () => {
             {/* Modal completo con TODOS los campos */}
             {isModalOpen && (
                 <Modal onClose={() => setIsModalOpen(false)}>
-                    <h2 className="text-xl font-bold mb-4">{editingUser ? 'Editar Usuario' : 'Agregar Usuario'}</h2>
+                    <h2 className="text-xl font-bold mb-4 text-gray-700">{editingUser ? 'Editar Usuario' : 'Agregar Usuario'}</h2>
                     <p className="text-gray-600 mb-4">Nombre:</p>
                     <input
                         type="text"
                         placeholder="Nombre"
                         value={newUserName}
                         onChange={(e) => setNewUserName(e.target.value)}
-                        className="mb-2 w-full border border-gray-300 rounded px-3 py-2"
+                        className="mb-2 w-full border border-gray-300 rounded px-3 py-2 text-gray-700"
                     />
                     <p className="text-gray-600 mb-4">Correo:</p>
                     <input
@@ -307,7 +307,7 @@ const AdminPage: React.FC = () => {
                         placeholder="Email"
                         value={newUserEmail}
                         onChange={(e) => setNewUserEmail(e.target.value)}
-                        className="mb-2 w-full border border-gray-300 rounded px-3 py-2"
+                        className="mb-2 w-full border border-gray-300 rounded px-3 py-2 text-gray-700"
                     />
                     <p className="text-gray-600 mb-4">Clave:</p>
                     <input
@@ -315,13 +315,13 @@ const AdminPage: React.FC = () => {
                         placeholder="Contraseña"
                         value={newUserPassword}
                         onChange={(e) => setNewUserPassword(e.target.value)}
-                        className="mb-2 w-full border border-gray-300 rounded px-3 py-2"
+                        className="mb-2 w-full border border-gray-300 rounded px-3 py-2 text-gray-700"
                     />
                     <p className="text-gray-600 mb-4">Rol:</p>
                     <select
                         value={newUserRole}
                         onChange={(e) => setNewUserRole(e.target.value)}
-                        className="mb-2 w-full border border-gray-300 rounded px-3 py-2"
+                        className="mb-2 w-full border border-gray-300 rounded px-3 py-2 text-gray-700"
                     >
                         <option value="ROLE_USER">Usuario</option>
                         <option value="ROLE_ADMIN">Admin</option>
@@ -330,14 +330,14 @@ const AdminPage: React.FC = () => {
                     <select
                         value={newUserActivo}
                         onChange={(e) => setNewUserActivo(Number(e.target.value))}
-                        className="mb-2 w-full border border-gray-300 rounded px-3 py-2"
+                        className="mb-2 w-full border border-gray-300 rounded px-3 py-2 text-gray-700"
                     >
                         <option value={1}>Activo</option>
                         <option value={0}>Inactivo</option>
                     </select>
 
                     <div className="flex justify-end space-x-2">
-                        <button onClick={() => setIsModalOpen(false)} className="px-4 py-2 border rounded">Cancelar</button>
+                        <button onClick={() => setIsModalOpen(false)} className="px-4 py-2 border rounded text-gray-700">Cancelar</button>
                         <button onClick={handleSaveUser} className="px-4 py-2 bg-[#FF6B35] text-white rounded">
                             {editingUser ? 'Guardar Cambios' : 'Agregar'}
                         </button>

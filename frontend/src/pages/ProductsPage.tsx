@@ -242,8 +242,8 @@ const ProductsPage: React.FC = () => {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Gestión de Productos</h1>
-          <p className="mt-1 text-gray-600">
+          <h1 className="text-2xl font-bold text-white">Gestión de Productos</h1>
+          <p className="mt-1 text-white">
             Total: <span className="font-medium">{products.length} productos</span>
           </p>
         </div>
@@ -272,7 +272,7 @@ const ProductsPage: React.FC = () => {
         )}
       </div>
 
-      <div className="bg-white rounded-xl shadow-md overflow-hidden">
+      <div className="bg-cyan-700 rounded-xl shadow-md overflow-hidden">
         <div className="p-5 border-b border-gray-200">
           <div className="flex flex-col md:flex-row justify-between md:items-center space-y-4 md:space-y-0">
             <div className="relative max-w-md">
@@ -482,7 +482,7 @@ const ProductsPage: React.FC = () => {
                           <input
                               type="text"
                               id="productName"
-                              className="form-input block w-full"
+                              className="form-input block w-full text-gray-700"
                               value={productName}
                               onChange={(e) => setProductName(e.target.value)}
                               placeholder="Ej: Hamburguesa Completa"
@@ -500,7 +500,7 @@ const ProductsPage: React.FC = () => {
                             <input
                                 type="number"
                                 id="productPrice"
-                                className="form-input block w-full pl-10"
+                                className="form-input block w-full pl-10 text-gray-700"
                                 placeholder="0.00"
                                 value={productPrice}
                                 onChange={(e) => setProductPrice(e.target.value)}
@@ -516,7 +516,7 @@ const ProductsPage: React.FC = () => {
                           </label>
                           <select
                               id="productCategory"
-                              className="form-input block w-full"
+                              className="form-input block w-full text-gray-700"
                               value={productCategory}
                               onChange={(e) => setProductCategory(e.target.value as 'food' | 'drinks' | 'combos')}
                           >
@@ -535,7 +535,7 @@ const ProductsPage: React.FC = () => {
                                 {products
                                     .filter((p) => p.categoria_prod_id !== 3 && p.activo === 1)
                                     .map((p) => (
-                                        <label key={p.id} className="flex items-center space-x-2">
+                                        <label key={p.id} className="flex items-center space-x-2 text-gray-700">
                                           <input
                                               type="checkbox"
                                               value={p.id}
@@ -563,7 +563,7 @@ const ProductsPage: React.FC = () => {
                           <input
                               type="text"
                               id="stock_actual"
-                              className="form-input block w-full"
+                              className="form-input block w-full text-gray-700"
                               value={productStock}
                               onChange={(e) => setStockProduct(e.target.value)}
                               min="0"
@@ -621,7 +621,7 @@ const ProductsPage: React.FC = () => {
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Producto</label>
                   <select
-                      className="form-select w-full"
+                      className="form-select w-full text-gray-700"
                       value={selectedProductId ?? ''}
                       onChange={(e) => setSelectedProductId(Number(e.target.value))}
                   >
@@ -656,7 +656,7 @@ const ProductsPage: React.FC = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-1">Cantidad</label>
                   <input
                       type="number"
-                      className="form-input w-full"
+                      className="form-input w-full text-gray-700"
                       value={stockMovementQty}
                       onChange={(e) => setStockMovementQty(e.target.value)}
                       min="1"
@@ -666,7 +666,7 @@ const ProductsPage: React.FC = () => {
                 <div className="flex justify-end gap-2">
                   <button
                       onClick={() => setShowStockModal(false)}
-                      className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+                      className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 text-gray-700"
                   >
                     Cancelar
                   </button>

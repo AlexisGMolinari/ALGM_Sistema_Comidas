@@ -718,7 +718,7 @@ const OrdersPage: React.FC = () => {
     return (
         <div className="space-y-6">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-                <h1 className="text-2xl font-bold text-gray-800">Gestión de Pedidos</h1>
+                <h1 className="text-2xl font-bold text-white">Gestión de Pedidos</h1>
                 <div className="mt-4 md:mt-0 flex flex-col sm:flex-row sm:space-x-3 space-y-2 sm:space-y-0">
                     <button
                         onClick={() => setActiveTab("orderList")}
@@ -742,16 +742,16 @@ const OrdersPage: React.FC = () => {
             </div>
 
             {activeTab === "orderList" ? (
-                <div className="bg-white rounded-xl shadow-md overflow-hidden">
+                <div className="bg-cyan-700 rounded-xl shadow-md overflow-hidden">
                     <div className="p-5 border-b border-gray-200">
                         <div className="flex flex-col md:flex-row justify-between space-y-4 md:space-y-0">
                             <div className="relative max-w-md">
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <Search size={18} className="text-gray-400" />
+                                    <Search size={18} className="text-gray-400"/>
                                 </div>
                                 <input
                                     type="text"
-                                    className="pl-10 form-input w-full max-w-xs"
+                                    className="pl-10 form-input w-full max-w-xs text-gray-700"
                                     placeholder="Buscar por cliente o #"
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
@@ -997,8 +997,8 @@ const OrdersPage: React.FC = () => {
                         ) : (
                             <div className="text-center py-10">
                                 <ShoppingCart size={48} className="mx-auto text-gray-400" />
-                                <h3 className="mt-4 text-lg font-medium text-gray-900">No hay pedidos</h3>
-                                <p className="mt-1 text-sm text-gray-500">No se encontraron pedidos con los filtros seleccionados.</p>
+                                <h3 className="mt-4 text-lg font-medium text-white">No hay pedidos</h3>
+                                <p className="mt-1 text-sm text-white">No se encontraron pedidos con los filtros seleccionados.</p>
                             </div>
                         )}
                     </div>
@@ -1086,7 +1086,7 @@ const OrdersPage: React.FC = () => {
                                 <input
                                     id="customerName"
                                     type="text"
-                                    className="form-input w-full"
+                                    className="form-input w-full text-gray-700"
                                     placeholder="Ingrese nombre del cliente"
                                     value={customerName}
                                     onChange={(e) => setCustomerName(e.target.value)}
@@ -1172,7 +1172,7 @@ const OrdersPage: React.FC = () => {
                                 </label>
                                 <textarea
                                     id="orderNote"
-                                    className="form-textarea w-full rounded-md border-gray-300 focus:ring-[#FF6B35] focus:border-[#FF6B35]"
+                                    className="form-textarea w-full rounded-md border-gray-300 focus:ring-[#FF6B35] focus:border-[#FF6B35] text-gray-700"
                                     placeholder="Ej: sin verduras, poco queso, sin sal..."
                                     rows={3}
                                     value={orderNote}

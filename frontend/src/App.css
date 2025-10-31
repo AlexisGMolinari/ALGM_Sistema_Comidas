@@ -1,192 +1,146 @@
-/* Custom CSS Variables */
+/* ============================================
+   Sistema de Comidas - Estilos Globales Modernos
+   ============================================ */
+
 :root {
-  /* Primary Colors */
-  --color-primary: #FF6B35;
-  --color-primary-light: #FF8D5C;
-  --color-primary-dark: #D6492C;
-  
-  /* Secondary Colors */
-  --color-secondary: #2EC4B6;
-  --color-secondary-light: #4FDECF;
-  --color-secondary-dark: #23A399;
-  
-  /* Accent Color */
-  --color-accent: #FDCA40;
-  --color-accent-light: #FFDB6D;
-  --color-accent-dark: #D4A829;
-  
-  /* Status Colors */
-  --color-success: #3BB273;
-  --color-warning: #FFB347;
-  --color-error: #FF595E;
-  
-  /* Neutral Colors */
-  --color-white: #FFFFFF;
-  --color-gray-100: #F9FAFB;
-  --color-gray-200: #E5E7EB;
-  --color-gray-300: #D1D5DB;
-  --color-gray-400: #9CA3AF;
-  --color-gray-500: #6B7280;
-  --color-gray-600: #4B5563;
-  --color-gray-700: #374151;
-  --color-gray-800: #1F2937;
-  --color-gray-900: #111827;
-  --color-black: #000000;
-  
-  /* Font Sizes */
-  --font-size-xs: 0.75rem;
-  --font-size-sm: 0.875rem;
-  --font-size-base: 1rem;
-  --font-size-lg: 1.125rem;
-  --font-size-xl: 1.25rem;
-  --font-size-2xl: 1.5rem;
-  --font-size-3xl: 1.875rem;
-  --font-size-4xl: 2.25rem;
-  
-  /* Spacing */
-  --spacing-1: 0.25rem;
-  --spacing-2: 0.5rem;
-  --spacing-3: 0.75rem;
-  --spacing-4: 1rem;
-  --spacing-5: 1.25rem;
-  --spacing-6: 1.5rem;
-  --spacing-8: 2rem;
-  --spacing-10: 2.5rem;
-  --spacing-12: 3rem;
-  --spacing-16: 4rem;
+    /* Paleta Principal (Azules corporativos) */
+    --color-primary: #2563eb; /* azul medio */
+    --color-primary-light: #3b82f6;
+    --color-primary-dark: #1e3a8a;
+
+    /* Colores Secundarios (acento naranja suave) */
+    --color-secondary: #f59e0b;
+    --color-secondary-light: #fbbf24;
+    --color-secondary-dark: #b45309;
+
+    /* Colores Estado */
+    --color-success: #10b981;
+    --color-warning: #facc15;
+    --color-error: #ef4444;
+
+    /* Neutros */
+    --color-white: #ffffff;
+    --color-gray-100: #f3f4f6;
+    --color-gray-200: #e5e7eb;
+    --color-gray-300: #d1d5db;
+    --color-gray-400: #9ca3af;
+    --color-gray-500: #6b7280;
+    --color-gray-600: #4b5563;
+    --color-gray-700: #374151;
+    --color-gray-800: #1f2937;
+    --color-gray-900: #111827;
+    --color-black: #000000;
+
+    /* Tipografía */
+    --font-size-sm: 0.875rem;
+    --font-size-base: 1rem;
+    --font-size-lg: 1.125rem;
+    --font-size-xl: 1.25rem;
+    --font-size-2xl: 1.5rem;
+
+    /* Espaciados */
+    --spacing-2: 0.5rem;
+    --spacing-4: 1rem;
+    --spacing-6: 1.5rem;
+    --spacing-8: 2rem;
 }
 
-/* Global Styles */
+/* ========= GLOBAL ========= */
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
-    Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-  color: var(--color-gray-800);
-  background-color: var(--color-gray-100);
-  line-height: 1.5;
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: var(--color-gray-800);
+    background-color: var(--color-gray-100);
+    line-height: 1.5;
+    animation: fadeIn 0.3s ease-out;
 }
 
-/* Animations */
+/* ========= ANIMACIONES ========= */
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
 @keyframes slideInUp {
-  from {
-    transform: translateY(30px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
+    from { transform: translateY(30px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
 }
 
 .page-transition {
-  animation: fadeIn 0.3s ease-out;
+    animation: fadeIn 0.3s ease-out;
 }
 
 .card-transition {
-  animation: slideInUp 0.4s ease-out;
+    animation: slideInUp 0.4s ease-out;
 }
 
-/* Button Styles */
+/* ========= BOTONES ========= */
 .btn {
-  @apply rounded-lg px-4 py-2 font-medium transition-all duration-200;
+    @apply rounded-lg px-4 py-2 font-medium transition-all duration-200 focus:outline-none;
 }
 
 .btn-primary {
-  @apply bg-[#FF6B35] text-white hover:bg-[#D6492C] focus:ring-2 focus:ring-[#FF8D5C] focus:ring-opacity-50;
+    @apply text-white bg-blue-600 hover:bg-blue-700 focus:ring-2 focus:ring-blue-300;
 }
 
 .btn-secondary {
-  @apply bg-[#2EC4B6] text-white hover:bg-[#23A399] focus:ring-2 focus:ring-[#4FDECF] focus:ring-opacity-50;
-}
-
-.btn-accent {
-  @apply bg-[#FDCA40] text-gray-800 hover:bg-[#D4A829] focus:ring-2 focus:ring-[#FFDB6D] focus:ring-opacity-50;
+    @apply text-white bg-amber-500 hover:bg-amber-600 focus:ring-2 focus:ring-amber-300;
 }
 
 .btn-success {
-  @apply bg-[#3BB273] text-white hover:bg-[#2E9D60] focus:ring-2 focus:ring-[#3BB273] focus:ring-opacity-50;
+    @apply bg-emerald-500 text-white hover:bg-emerald-600 focus:ring-2 focus:ring-emerald-300;
 }
 
 .btn-warning {
-  @apply bg-[#FFB347] text-gray-800 hover:bg-[#F09A29] focus:ring-2 focus:ring-[#FFB347] focus:ring-opacity-50;
+    @apply bg-yellow-400 text-gray-900 hover:bg-yellow-500 focus:ring-2 focus:ring-yellow-200;
 }
 
 .btn-danger {
-  @apply bg-[#FF595E] text-white hover:bg-[#D6383D] focus:ring-2 focus:ring-[#FF595E] focus:ring-opacity-50;
+    @apply bg-red-500 text-white hover:bg-red-600 focus:ring-2 focus:ring-red-300;
 }
 
-/* Card Styles */
+/* ========= CARDS ========= */
 .card {
-  @apply bg-white rounded-lg shadow-md overflow-hidden;
+    @apply bg-white rounded-xl shadow-md p-4;
 }
 
-/* Status Badges */
-.badge {
-  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
-}
-
-.badge-success {
-  @apply bg-green-100 text-green-800;
-}
-
-.badge-warning {
-  @apply bg-yellow-100 text-yellow-800;
-}
-
-.badge-danger {
-  @apply bg-red-100 text-red-800;
-}
-
-/* Custom Checkbox */
-.custom-checkbox {
-  @apply h-5 w-5 rounded border-gray-300 text-[#2EC4B6] focus:ring-[#4FDECF];
-}
-
-/* Custom Forms */
+/* ========= FORMULARIOS ========= */
 .form-input {
-  @apply rounded-lg border-gray-300 shadow-sm focus:border-[#2EC4B6] focus:ring focus:ring-[#4FDECF] focus:ring-opacity-50;
+    @apply rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-300 focus:ring-opacity-40;
 }
 
 .form-label {
-  @apply block text-sm font-medium text-gray-700 mb-1;
+    @apply block text-sm font-medium text-gray-700 mb-1;
 }
 
-/* Table Styles */
+/* ========= BADGES ========= */
+.badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+}
+.badge-success { @apply bg-emerald-100 text-emerald-800; }
+.badge-warning { @apply bg-yellow-100 text-yellow-800; }
+.badge-danger { @apply bg-red-100 text-red-800; }
+
+/* ========= TABLAS ========= */
 .table {
-  @apply min-w-full divide-y divide-gray-200;
+    @apply min-w-full divide-y divide-gray-200 bg-white rounded-lg overflow-hidden;
 }
-
 .table-header {
-  @apply bg-gray-50;
+    @apply bg-blue-50;
 }
-
 .table-header-cell {
-  @apply px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider;
+    @apply px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider;
 }
-
 .table-body {
-  @apply bg-white divide-y divide-gray-200;
+    @apply bg-white divide-y divide-gray-200;
 }
-
 .table-row {
-  @apply hover:bg-gray-50;
+    @apply hover:bg-blue-50;
 }
-
 .table-cell {
-  @apply px-6 py-4 whitespace-nowrap text-sm text-gray-500;
+    @apply px-6 py-4 whitespace-nowrap text-sm text-gray-700;
 }
 
-/* Media Queries */
+/* ========= RESPONSIVE ========= */
 @media (max-width: 768px) {
-  .hide-on-mobile {
-    display: none;
-  }
+    .hide-on-mobile { display: none; }
 }

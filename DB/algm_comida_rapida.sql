@@ -174,6 +174,41 @@ CREATE TABLE `pedido_historial` (
   `usuario_id` int UNSIGNED NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE `acceso_categoria` (
+    `id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+    `nombre` VARCHAR(50) NOT NULL COLLATE 'utf8mb4_unicode_ci',
+    `orden` INT(11) NOT NULL DEFAULT '1',
+    PRIMARY KEY (`id`) USING BTREE
+)
+COLLATE='utf8mb4_unicode_ci'
+ENGINE=InnoDB;
+
+CREATE TABLE `acceso_acceso` (
+    `id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+    `categoria_id` INT(10) UNSIGNED NOT NULL,
+    `nombre` VARCHAR(255) NOT NULL COLLATE 'utf8mb4_unicode_ci',
+    `orden` SMALLINT(6) NOT NULL,
+    PRIMARY KEY (`id`) USING BTREE,
+    INDEX `FKacceso_acceso-categoria` (`categoria_id`) USING BTREE,
+    CONSTRAINT `FKacceso_acceso-categoria` FOREIGN KEY (`categoria_id`) REFERENCES `acceso_categoria` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION
+)
+COLLATE='utf8mb4_unicode_ci'
+ENGINE=InnoDB;
+
+CREATE TABLE `usuario_accesos` (
+    `id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+    `usuario_id` INT(10) UNSIGNED NOT NULL,
+    `acceso_id` INT(10) UNSIGNED NOT NULL,
+    PRIMARY KEY (`id`) USING BTREE,
+    INDEX `FKusuario_accesos-usuarios` (`usuario_id`) USING BTREE,
+    INDEX `FKusuario_accesos-accesos` (`acceso_id`) USING BTREE,
+    CONSTRAINT `FKusuario_accesos-accesos` FOREIGN KEY (`acceso_id`) REFERENCES `acceso_acceso` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION,
+    CONSTRAINT `FKusuario_accesos-usuarios` FOREIGN KEY (`usuario_id`) REFERENCES `usuarios` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION
+)
+COLLATE='utf8mb4_unicode_ci'
+ENGINE=InnoDB;
+
+
 ----------------------------------------------------------------------
 
 ALTER TABLE `caja`

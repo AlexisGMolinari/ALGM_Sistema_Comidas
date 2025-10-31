@@ -66,8 +66,8 @@ const ComprobantesPage: React.FC = () => {
         <div className="space-y-6">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-800">Gestión de Comprobantes</h1>
-                    <p className="mt-1 text-gray-600">
+                    <h1 className="text-2xl font-bold text-white">Gestión de Comprobantes</h1>
+                    <p className="mt-1 text-orange-500">
                         Total: <span className="font-medium">{comprobantes.length} comprobantes</span>
                     </p>
                 </div>
@@ -84,7 +84,7 @@ const ComprobantesPage: React.FC = () => {
                                     inputMode="text"
                                     value={desde}
                                     onChange={(e) => setDesde(e.target.value)}
-                                    className="form-input mt-1"
+                                    className="form-input mt-1 text-gray-700"
                                 />
                             </div>
                         </div>
@@ -96,7 +96,7 @@ const ComprobantesPage: React.FC = () => {
                                     inputMode="text"
                                     value={hasta}
                                     onChange={(e) => setHasta(e.target.value)}
-                                    className="form-input mt-1"
+                                    className="form-input mt-1 text-gray-700"
                                 />
                             </div>
                         </div>
@@ -121,7 +121,7 @@ const ComprobantesPage: React.FC = () => {
                         </div>
                         <input
                             type="text"
-                            className="pl-10 form-input w-full max-w-xs"
+                            className="pl-10 form-input w-full max-w-xs text-gray-700"
                             placeholder="Buscar cliente"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
