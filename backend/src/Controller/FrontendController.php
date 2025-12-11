@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Repository\Shared\MigracionesRepository;
 use Doctrine\DBAL\Exception;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
@@ -30,4 +31,24 @@ class FrontendController extends AbstractController
         $repository->procesarAccesos();
         return new Response('Terminamos', 200);
     }
+
+    #[Route('/api/debug-log', name: 'debug_log')]
+    public function debugLog(): JsonResponse
+    {
+        $logPath = $this->getParameter('kernel.project_dir') . '/var/log/prod.log';
+
+        if (!file_exists($logPath)) {
+            return new JsonResponse(['error' => 'Log file not found'], 404);
+        }
+
+        $content = file_get_contents($logPath);
+
+        // Últimos 2000 caracteres
+        $snippet = substr($content, -2000);
+
+        return new JsonResponse([
+            'log' => $snippet
+        ]);
+    }
+
 }

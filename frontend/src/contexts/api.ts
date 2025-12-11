@@ -2,7 +2,7 @@ import axios from 'axios';
 import { CashRegister, ExpenseAPIResponse, Category, Expense, CierreCajaPayload, Order,
     Product, OrderItem, DailyReport, MonthlyReport, DailyReportItem, Comprobantes, DashboardResumen } from '../types';
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://apisistema-comidas.algm-webs.com/api';
+const API_URL = import.meta.env.VITE_API_URL || 'https://api-sistema-comidas.algm-webs.com/api';
 const BASE_URL = API_URL.replace(/\/api\/?$/, '');
 //console.log("API_URL en este entorno:", API_URL);
 

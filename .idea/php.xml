@@ -19,7 +19,6 @@
       <path value="$PROJECT_DIR$/backend/vendor/doctrine/deprecations" />
       <path value="$PROJECT_DIR$/backend/vendor/doctrine/dbal" />
       <path value="$PROJECT_DIR$/backend/vendor/doctrine/persistence" />
-      <path value="$PROJECT_DIR$/backend/vendor/doctrine/doctrine-bundle" />
       <path value="$PROJECT_DIR$/backend/vendor/doctrine/inflector" />
       <path value="$PROJECT_DIR$/backend/vendor/doctrine/sql-formatter" />
       <path value="$PROJECT_DIR$/backend/vendor/brick/math" />
@@ -50,8 +49,6 @@
       <path value="$PROJECT_DIR$/backend/vendor/symfony/validator" />
       <path value="$PROJECT_DIR$/backend/vendor/egulias/email-validator" />
       <path value="$PROJECT_DIR$/backend/vendor/symfony/framework-bundle" />
-      <path value="$PROJECT_DIR$/backend/vendor/symfony/service-contracts" />
-      <path value="$PROJECT_DIR$/backend/vendor/symfony/translation-contracts" />
       <path value="$PROJECT_DIR$/backend/vendor/lexik/jwt-authentication-bundle" />
       <path value="$PROJECT_DIR$/backend/vendor/symfony/event-dispatcher" />
       <path value="$PROJECT_DIR$/backend/vendor/symfony/flex" />
@@ -81,7 +78,6 @@
       <path value="$PROJECT_DIR$/backend/vendor/symfony/filesystem" />
       <path value="$PROJECT_DIR$/backend/vendor/symfony/error-handler" />
       <path value="$PROJECT_DIR$/backend/vendor/symfony/polyfill-intl-idn" />
-      <path value="$PROJECT_DIR$/backend/vendor/bacon/bacon-qr-code" />
       <path value="$PROJECT_DIR$/backend/vendor/symfony/twig-bundle" />
       <path value="$PROJECT_DIR$/backend/vendor/symfony/polyfill-mbstring" />
       <path value="$PROJECT_DIR$/backend/vendor/symfony/dotenv" />
@@ -90,9 +86,14 @@
       <path value="$PROJECT_DIR$/backend/vendor/symfony/process" />
       <path value="$PROJECT_DIR$/backend/vendor/symfony/yaml" />
       <path value="$PROJECT_DIR$/backend/vendor/lcobucci/clock" />
-      <path value="$PROJECT_DIR$/backend/vendor/fpdf/fpdf" />
       <path value="$PROJECT_DIR$/backend/vendor/nelmio/cors-bundle" />
       <path value="$PROJECT_DIR$/backend/vendor/lcobucci/jwt" />
+      <path value="$PROJECT_DIR$/backend/vendor/symfony/polyfill-php84" />
+      <path value="$PROJECT_DIR$/backend/vendor/bacon/bacon-qr-code" />
+      <path value="$PROJECT_DIR$/backend/vendor/doctrine/doctrine-bundle" />
+      <path value="$PROJECT_DIR$/backend/vendor/symfony/service-contracts" />
+      <path value="$PROJECT_DIR$/backend/vendor/symfony/translation-contracts" />
+      <path value="$PROJECT_DIR$/backend/vendor/fpdf/fpdf" />
     </include_path>
   </component>
   <component name="PhpProjectSharedConfiguration" php_language_level="8.2" />
