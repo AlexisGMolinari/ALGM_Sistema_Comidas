@@ -20,15 +20,17 @@ class ProductoRepository extends TablasSimplesAbstract
 
     /**
      * @param Request $request
+     * @param int $empresa_id
      * @return array
      * @throws Exception
      */
-    public function getAllPaginados(Request $request): array
+    public function getAllPaginados(Request $request, int $empresa_id): array
     {
         $camposRequest = $request->query->all();
 
         $sql = "SELECT prod.*, cat.nombre AS nombre_producto FROM " . $this->nombreTabla . " prod
-            inner join categoria_producto cat on prod.categoria_prod_id = cat.id";
+            inner join categoria_producto cat on prod.categoria_prod_id = cat.id
+            WHERE empresa_id = " . $empresa_id;
 
         $arrParam = [ 'prod.id','prod.nombre', 'prod.precio', 'prod.stock_actual', 'cat.nombre'];
 
@@ -45,25 +47,27 @@ class ProductoRepository extends TablasSimplesAbstract
 
     /**
      * @param int $id
+     * @param int $empresa_id
      * @return array
      * @throws Exception
      */
-    public function getProdById(int $id): array
+    public function getProdById(int $id, int $empresa_id): array
     {
         $sql = "SELECT prod.*, cat.nombre AS nombreCategoria FROM " . $this->nombreTabla . " prod
                 INNER JOIN categoria_producto cat ON prod.categoria_prod_id = cat.id
-                WHERE prod.id = ?";
+                WHERE prod.id = ? AND empresa_id = " . $empresa_id;
         return $this->connection->fetchAssociative($sql, [$id]);
     }
 
     /**
      * @param int $categoriaId
+     * @param int $empresa_id
      * @return array
      * @throws Exception
      */
-    public function getProductosByCategoria(int $categoriaId): array
+    public function getProductosByCategoria(int $categoriaId, int $empresa_id): array
     {
-        $where = " WHERE cat.id = ? AND prod.activo = 1";
+        $where = " WHERE cat.id = ? AND prod.activo = 1 AND empresa_id = " . $empresa_id;
         $sql = "SELECT prod.*, cat.nombre AS nombreCategoria FROM " . $this->nombreTabla . " prod
                 INNER JOIN categoria_producto cat ON prod.categoria_prod_id = cat.id ";
         $sql .= $where;
@@ -72,25 +76,27 @@ class ProductoRepository extends TablasSimplesAbstract
 
     /**
      * @param int $id
+     * @param int $empresa_id
      * @return void
      * @throws Exception
      */
-    public function deshabilitarProducto(int $id): void
+    public function deshabilitarProducto(int $id, int $empresa_id): void
     {
-        $this->connection->update($this->nombreTabla, ['activo' => 0], ['id' => $id]);
+        $this->connection->update($this->nombreTabla, ['activo' => 0], ['id' => $id, 'empresa_id' => $empresa_id]);
     }
 
     /**
      * @param int $id
      * @param int $tipoMov
      * @param float $cantidad
+     * @param int $empresa_id
      * @return void
      * @throws Exception
      */
-    public function actualizoStock (int $id, int $tipoMov, float $cantidad): void
+    public function actualizoStock (int $id, int $tipoMov, float $cantidad, int $empresa_id): void
     {
         // Obtener stock actual y nombre del producto
-        $sqlProducto = "SELECT stock_actual, nombre FROM producto WHERE id = ?";
+        $sqlProducto = "SELECT stock_actual, nombre FROM producto WHERE id = ? AND empresa_id = " . $empresa_id;
         $producto = $this->connection->fetchAssociative($sqlProducto, [$id]);
 
         $stockActual = isset($producto['stock_actual']) ? (float) $producto['stock_actual'] : 0;
@@ -113,14 +119,15 @@ class ProductoRepository extends TablasSimplesAbstract
 
     /**
      * @param array $postValues
+     * @param int $empresa_id
      * @return void
      * @throws Exception
      */
-    public function actualizaStockProducto(array $postValues): void
+    public function actualizaStockProducto(array $postValues, int $empresa_id): void
     {
         $this->connection->beginTransaction();
 
-        $this->actualizoStock($postValues['id'], $postValues['tipo_movimiento'], $postValues['cantidad']);
+        $this->actualizoStock($postValues['id'], $postValues['tipo_movimiento'], $postValues['cantidad'], $empresa_id);
 
         $arrMov = [
             'producto_id' => $postValues['id'],
@@ -137,10 +144,11 @@ class ProductoRepository extends TablasSimplesAbstract
      * @param int $cantidadCombo
      * @param int $tipoMov
      * @param int|null $pedidoId
+     * @param int $empresa_id
      * @return void
      * @throws Exception
      */
-    public function descontarStockCombo(int $comboId, int $cantidadCombo, int $tipoMov, ?int $pedidoId = null): void
+    public function descontarStockCombo(int $comboId, int $cantidadCombo, int $tipoMov,int $empresa_id, ?int $pedidoId = null): void
     {
         $sql = "SELECT producto_id, cantidad 
             FROM combo_producto 
@@ -154,7 +162,7 @@ class ProductoRepository extends TablasSimplesAbstract
             $productoId = (int)$comp['producto_id'];
             $cantidadNecesaria = (int)$comp['cantidad'] * $cantidadCombo;
 
-            $stock = $this->getProdById($productoId);
+            $stock = $this->getProdById($productoId, $empresa_id);
             $nombreProd = $stock['nombre'];
             if ($stock['stock_actual'] < $cantidadNecesaria) {
                 throw new HttpException(400,"No hay stock suficiente para el producto ID $nombreProd");
@@ -164,7 +172,7 @@ class ProductoRepository extends TablasSimplesAbstract
             $productoId = (int)$comp['producto_id'];
             $cantidadDescontar = (int)$comp['cantidad'] * $cantidadCombo;
 
-            $this->actualizoStock($productoId, $tipoMov, $cantidadDescontar); // 2 = salida
+            $this->actualizoStock($productoId, $tipoMov, $cantidadDescontar, $empresa_id); // 2 = salida
             $movimientoRepo->insertaMovimiento([
                 'producto_id' => $productoId,
                 'tipo_movimiento_id' => $tipoMov,

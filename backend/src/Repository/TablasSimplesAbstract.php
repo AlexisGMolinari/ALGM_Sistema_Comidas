@@ -10,12 +10,15 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class TablasSimplesAbstract
 {
-
+    protected int $empresaId = 0;
     public function __construct(protected Connection $connection,
                                 protected Security $security,
-                                protected string $nombreTabla = '')
+                                protected string $nombreTabla = '',
+                                protected bool $tieneEmpresa = false)
 	{
 		date_default_timezone_set('America/Argentina/Cordoba');
+        if ($this->tieneEmpresa)
+            $this->empresaId = ($this->security->getUser())? $this->security->getUser()->getEmpresa(): 0;
 	}
 
 	/**
@@ -31,19 +34,31 @@ class TablasSimplesAbstract
                            bool $ordenados = false,
                            bool $alfabeticamente = false): array
     {
-        $sql = "select t.* from " . $this->nombreTabla . ' t ';
+        $sql = "select * from " . $this->nombreTabla;
+        $tieneWhere = false;
+        if ($this->tieneEmpresa) {
+            $tieneWhere = true;
+            $sql .= ' where empresa_id = ' . $this->empresaId;
+        }
         if ($soloActivos) {
-            $sql .= ' where t.activo = 1 ';
+            $sql .= ($tieneWhere ? ' and ' : ' where ') . ' activo = 1 ';
         }
         if ($ordenados) {
             if ($alfabeticamente){
-                $sql .= ' order by t.nombre';
+                $sql .= ' order by nombre';
             }else{
-                $sql .= ' order by t.orden';
+                $sql .= ' order by orden';
             }
 
         }
-        return $this->connection->fetchAllAssociative($sql);
+        $registros = $this->connection->fetchAllAssociative($sql);
+
+        //quito el empresa_id del array devuelto
+        if ($this->tieneEmpresa)
+            foreach ($registros as &$registro)
+                unset($registro['empresa_id']);
+
+        return $registros;
     }
 
 	/**
@@ -58,7 +73,8 @@ class TablasSimplesAbstract
     public function getAllPaginadosOrdenadosFiltrados(Request $request,
                                                       string $sql,
                                                       array $camposFiltro,
-                                                      string $campoActivo = ''): array
+                                                      string $campoActivo = '',
+                                                      bool $continuaWhere = false): array
     {
         $camposRequest = $request->query->all();
         $paginadorXion = new Paginador();
@@ -66,8 +82,9 @@ class TablasSimplesAbstract
             ->setServerSideParams($camposRequest)
             ->setCampoActivo($campoActivo)
             ->setSql($sql)
-            ->setContinuaWhere(false)
+            ->setContinuaWhere($continuaWhere)
             ->setCamposAFiltrar($camposFiltro);
+
         return $paginadorXion->getServerSideRegistros();
     }
 
@@ -79,8 +96,15 @@ class TablasSimplesAbstract
      */
     public function getById(int $id): bool|array
     {
-        $sql = "select t.* from " . $this->nombreTabla . ' t where t.id  = ?';
-        return $this->connection->fetchAssociative($sql, [$id]);
+
+        $sql = "select * from " . $this->nombreTabla . ' where id  = ?';
+        if ($this->tieneEmpresa){
+            $sql .= ' and empresa_id = ' . $this->empresaId;
+        }
+        $registro = $this->connection->fetchAssociative($sql, [$id]);
+        if (isset($registro['empresa_id']))
+            unset($registro['empresa_id']);
+        return $registro;
     }
 
     /**
@@ -89,10 +113,10 @@ class TablasSimplesAbstract
      * @return array
      * @throws Exception
      */
-    public function checkIdExiste(int $id): array {
+    public function checkIdExiste(int $id): array{
         $registro = $this->getById($id);
         if (!$registro){
-            throw new HttpException(404, 'No se encontró el registro ('.$this->nombreTabla . ')');
+            throw new HttpException(400, 'No se encontró el registro ('.$this->nombreTabla . ')');
         }
         return $registro;
     }
@@ -100,13 +124,25 @@ class TablasSimplesAbstract
     /**
      * Busca un registro por el campo código
      * @param string $codigo
+     * @param bool $conControl
      * @return false|array
      * @throws Exception
      */
-    public function getByCodigo(string $codigo): bool|array
+    public function getByCodigo(string $codigo, bool $conControl = false): bool|array
     {
-        $sql = "select t.* from " . $this->nombreTabla . ' t where t.codigo  = ?';
-        return $this->connection->fetchAssociative($sql, [$codigo]);
+        $sql = "select * from " . $this->nombreTabla . ' where codigo  = ?';
+        if ($this->tieneEmpresa){
+            $sql .= ' and empresa_id = ' . $this->empresaId;
+        }
+        $registro = $this->connection->fetchAssociative($sql, [$codigo]);
+
+        if (!$registro && $conControl){
+            throw new HttpException(404, 'No se encontró el registro ('.$this->nombreTabla . ')');
+        }
+        if (isset($registro['empresa_id']))
+            unset($registro['empresa_id']);
+        return $registro;
+
     }
 
     /**
@@ -116,8 +152,14 @@ class TablasSimplesAbstract
      */
     public function getByNombre(string $nombre): bool|array
     {
-        $sql = "select t.* from " . $this->nombreTabla . ' t where t.nombre  = ?';
-        return $this->connection->fetchAssociative($sql, [$nombre]);
+        $sql = "select * from " . $this->nombreTabla . ' where nombre  = ?';
+        if ($this->tieneEmpresa){
+            $sql .= ' and empresa_id = ' . $this->security->getUser()->getEmpresa();
+        }
+        $registro = $this->connection->fetchAssociative($sql, [$nombre]);
+        if (isset($registro['empresa_id']))
+            unset($registro['empresa_id']);
+        return $registro;
     }
 
     /**
@@ -128,10 +170,12 @@ class TablasSimplesAbstract
      * @return int|string
      * @throws Exception
      */
-    public function updateRegistro(array $registro, int $recordId): int|string
+    public function updateRegistro(array $registro, int $recordId): void
     {
-        unset($registro['id']);
-        return $this->connection->update($this->nombreTabla, $registro, ['id' => $recordId]);
+        if ($this->tieneEmpresa)
+            $this->connection->update($this->nombreTabla, $registro, ['id' => $recordId, 'empresa_id' => $this->security->getUser()->getEmpresa()]);
+        else
+            $this->connection->update($this->nombreTabla, $registro, ['id' => $recordId]);
     }
 
     /**
@@ -143,7 +187,12 @@ class TablasSimplesAbstract
      */
     public function createRegistro(array $registroValores): int
     {
-        $this->connection->insert($this->nombreTabla, $registroValores);
+        if ($this->tieneEmpresa) {
+            $registroValores['empresa_id'] = $this->security->getUser()->getEmpresa();
+            $this->connection->insert($this->nombreTabla, $registroValores);
+        }
+        else
+            $this->connection->insert($this->nombreTabla, $registroValores);
         return $this->connection->lastInsertId();
     }
 
@@ -167,9 +216,12 @@ class TablasSimplesAbstract
      * @return int|string
      * @throws Exception
      */
-    public function deleteRegistro(int $recordId): int|string
+    public function deleteRegistro(int $recordId): void
     {
-        return $this->connection->delete($this->nombreTabla, ['id' => $recordId]);
+        if ($this->tieneEmpresa)
+            $this->connection->delete($this->nombreTabla, ['id' => $recordId, 'empresa_id' => $this->security->getUser()->getEmpresa() ]);
+        else
+            $this->connection->delete($this->nombreTabla, ['id' => $recordId]);
     }
 
 

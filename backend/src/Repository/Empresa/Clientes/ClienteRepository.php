@@ -14,7 +14,7 @@ use Symfony\Component\HttpFoundation\Request;
 
 class ClienteRepository extends TablasSimplesAbstract
 {
-
+    protected int $empresaId = 0;
     public function __construct(Connection $connection, Security $security)
     {
         parent::__construct($connection, $security, 'cliente', true);
@@ -236,6 +236,17 @@ class ClienteRepository extends TablasSimplesAbstract
         $sql = "SELECT empresa_id, nombre FROM usuarios where roles = 'ROLE_USER' order by nombre";
 
         return $this->connection->fetchAllAssociative($sql);
+    }
+
+    /**
+     * Setter para cambiar la empresa - Solo se usa en el admin de F$
+     *
+     * @param int $empresaId
+     * @return void
+     */
+    public function setEmpresa(int $empresaId): void
+    {
+        $this->empresaId = $empresaId;
     }
 
 }

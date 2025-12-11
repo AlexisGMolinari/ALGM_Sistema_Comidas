@@ -26,7 +26,8 @@ class ProductoController extends AbstractController
     public function index(GetRequestValidator $requestValidator,
                           ProductoRepository   $productoRepository): JsonResponse
     {
-        $registros = $productoRepository->getAllPaginados($requestValidator->getRequest());
+        $empresa_id = $this->getUser()->getEmpresa();
+        $registros = $productoRepository->getAllPaginados($requestValidator->getRequest(), $empresa_id);
         return $this->json($registros);
     }
 
@@ -41,7 +42,8 @@ class ProductoController extends AbstractController
                             ProductoRepository $productoRepository): JsonResponse
     {
         $productoRepository->checkIdExiste($id);
-        $registro = $productoRepository->getProdById($id);
+        $empresa_id = $this->getUser()->getEmpresa();
+        $registro = $productoRepository->getProdById($id, $empresa_id);
         return $this->json($registro);
     }
 
@@ -57,8 +59,9 @@ class ProductoController extends AbstractController
                                        ProductoRepository $productoRepository,
                                        CategoriaRepository $categoriaRepository): JsonResponse
     {
+        $empresa_id = $this->getUser()->getEmpresa();
         $categoriaRepository->checkIdExiste($categoriaId);
-        $registros = $productoRepository->getProductosByCategoria($categoriaId);
+        $registros = $productoRepository->getProductosByCategoria($categoriaId, $empresa_id);
         return $this->json($registros);
     }
 
@@ -123,7 +126,8 @@ class ProductoController extends AbstractController
     public function desactivarProducto(int $id,
                            ProductoRepository $productoRepository): JsonResponse {
         $productoRepository->checkIdExiste($id);
-        $productoRepository->deshabilitarProducto($id);
+        $empresa_id = $this->getUser()->getEmpresa();
+        $productoRepository->deshabilitarProducto($id, $empresa_id);
         return $this->json([]);
     }
 
@@ -144,7 +148,8 @@ class ProductoController extends AbstractController
         $postValues = $requestValidator->getRestBody();
         $repository->checkIdExiste($productoId);
         $productoType->controloStock($postValues, $productoId);
-        $repository->actualizaStockProducto($postValues);
+        $empresa_id = $this->getUser()->getEmpresa();
+        $repository->actualizaStockProducto($postValues, $empresa_id);
         return $this->json([]);
     }
 
@@ -184,6 +189,7 @@ class ProductoController extends AbstractController
     public function descontarCombo(GetRequestValidator $requestValidator,
                                    ProductoRepository   $productoRepository): JsonResponse
     {
+        $empresa_id = $this->getUser()->getEmpresa();
         $valores = $requestValidator->getRestBody();
         if (!isset($valores['combo_id'], $valores['cantidad'])) {
             throw new \InvalidArgumentException("Se requieren los campos 'combo_id' y 'cantidad'");
@@ -192,7 +198,7 @@ class ProductoController extends AbstractController
         $cantidad = (int)$valores['cantidad'];
 
         $productoRepository->checkIdExiste($comboId);
-        $productoRepository->descontarStockCombo($comboId, $cantidad, 2);
+        $productoRepository->descontarStockCombo($comboId, $cantidad, 2, $empresa_id);
 
         return $this->json(['message' => 'Stock descontado correctamente']);
     }

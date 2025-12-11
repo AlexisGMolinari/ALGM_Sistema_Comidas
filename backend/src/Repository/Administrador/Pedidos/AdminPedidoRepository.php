@@ -114,10 +114,11 @@ class AdminPedidoRepository extends TablasSimplesAbstract
     /**
      * @param array $postValues
      * @param array $items
+     * @param int $empresa_id
      * @return int
      * @throws Exception
      */
-    public function createPedido(array $postValues, array $items): int
+    public function createPedido(array $postValues, array $items, int $empresa_id): int
     {
         $this->connection->beginTransaction();
         $postValues['caja_id'] = $this->getCajaAbierta($postValues['usuario_id'])['id'];
@@ -135,6 +136,7 @@ class AdminPedidoRepository extends TablasSimplesAbstract
                 'producto_id' => $item['producto_id'],
                 'precio' => $item['precio'],
                 'cantidad' => $item['cantidad'],
+                'empresa_id' => $empresa_id
             ];
             $productoId = $arrItems['producto_id'];
             $cantidad = $arrItems['cantidad'];
@@ -146,16 +148,17 @@ class AdminPedidoRepository extends TablasSimplesAbstract
             if ($productoRepo->esCombo($productoId)) {
                 // Descontar componentes del combo
                 $productoRepo->descontarStockCombo($productoId, $cantidad, 2, $pedidoId);
-                $productoRepo->actualizoStock($productoId, 2, $cantidad);
+                $productoRepo->actualizoStock($productoId, 2, $cantidad, $empresa_id);
             } else {
                 // Producto individual: actualizar stock y registrar movimiento
-                $productoRepo->actualizoStock($productoId, 2, $cantidad);
+                $productoRepo->actualizoStock($productoId, 2, $cantidad, $empresa_id);
 
                 $arrMov = [
                     'pedido_id' => $pedidoId,
                     'producto_id' => $item['producto_id'],
                     'tipo_movimiento_id' => 2,
-                    'cantidad' => $item['cantidad']
+                    'cantidad' => $item['cantidad'],
+                    'empresa_id' => $empresa_id
                 ];
                 $movimientoRepo->insertaMovimiento($arrMov);
 
@@ -172,10 +175,12 @@ class AdminPedidoRepository extends TablasSimplesAbstract
     /**
      * @param int $idPedido
      * @param array $items
+     * @param int $empresa_id
      * @return void
-     * @throws Exception|Throwable
+     * @throws Exception
+     * @throws Throwable
      */
-    public function actualizaPedido(int $idPedido, array $items): void
+    public function actualizaPedido(int $idPedido, array $items, int $empresa_id): void
     {
         $pedido = $this->getByIdPedido($idPedido);
         if($pedido['estado_id'] == 2){
@@ -232,7 +237,7 @@ class AdminPedidoRepository extends TablasSimplesAbstract
                     ]);
                     // devolver stock por la cantidad que quitaste
                     if ($delta < 0) {
-                        $productoRepo->actualizoStock($pid, 1, -$delta); // 1 = entrada
+                        $productoRepo->actualizoStock($pid, 1, -$delta, $empresa_id); // 1 = entrada
                         $movRepo->insertaMovimiento([
                             'pedido_id' => $idPedido,
                             'producto_id' => $pid,
@@ -249,7 +254,7 @@ class AdminPedidoRepository extends TablasSimplesAbstract
                         'cantidad'    => $newQty
                     ]);
                     // descontar stock por lo nuevo
-                    $productoRepo->actualizoStock($pid, 2, $newQty); // 2 = salida
+                    $productoRepo->actualizoStock($pid, 2, $newQty, $empresa_id); // 2 = salida
                     $movRepo->insertaMovimiento([
                         'pedido_id' => $idPedido,
                         'producto_id' => $pid,
@@ -268,7 +273,7 @@ class AdminPedidoRepository extends TablasSimplesAbstract
 
                     if ($delta > 0) {
                         // aumentaste cantidad => salida
-                        $productoRepo->actualizoStock($pid, 2, $delta);
+                        $productoRepo->actualizoStock($pid, 2, $delta, $empresa_id);
                         $movRepo->insertaMovimiento([
                             'pedido_id' => $idPedido,
                             'producto_id' => $pid,
@@ -277,7 +282,7 @@ class AdminPedidoRepository extends TablasSimplesAbstract
                         ]);
                     } elseif ($delta < 0) {
                         // bajaste cantidad => entrada
-                        $productoRepo->actualizoStock($pid, 1, -$delta);
+                        $productoRepo->actualizoStock($pid, 1, -$delta, $empresa_id);
                         $movRepo->insertaMovimiento([
                             'pedido_id' => $idPedido,
                             'producto_id' => $pid,
@@ -332,10 +337,11 @@ class AdminPedidoRepository extends TablasSimplesAbstract
 
     /**
      * @param int $idPedido
+     * @param int $empresa_id
      * @return void
      * @throws Exception
      */
-    public function eliminarPedido(int $idPedido): void
+    public function eliminarPedido(int $idPedido, int $empresa_id): void
     {
         $registro = $this->getByIdPedido($idPedido);
         if($registro['estado_id'] != 3) {
@@ -351,7 +357,7 @@ class AdminPedidoRepository extends TablasSimplesAbstract
         // 2. Reestablecer stock por cada producto
         $productoRepository = new ProductoRepository($this->connection, $this->security);
         foreach ($detalles as $detalle) {
-            $productoRepository->actualizoStock($detalle['producto_id'], 1, $detalle['cantidad']); // tipo_movimiento_id 1 = ingreso
+            $productoRepository->actualizoStock($detalle['producto_id'], 1, $detalle['cantidad'], $empresa_id); // tipo_movimiento_id 1 = ingreso
 
             (new MovimientoStockRepository($this->connection, $this->security))
                 ->insertaMovimiento([
@@ -377,10 +383,11 @@ class AdminPedidoRepository extends TablasSimplesAbstract
     /**
      * @param array $postValues
      * @param int $idPedido
+     * @param int $empresa_id
      * @return void
      * @throws Exception
      */
-    public function anularPedido(array $postValues, int $idPedido): void
+    public function anularPedido(array $postValues, int $idPedido, int $empresa_id): void
     {
         $registro = $this->getByIdPedido($idPedido);
         if ($registro['estado_id'] === 3) {
@@ -401,10 +408,10 @@ class AdminPedidoRepository extends TablasSimplesAbstract
             if ($productoRepo->esCombo($productoId)) {
                 // Es un combo → reponer componentes
                 $productoRepo->descontarStockCombo($productoId, $cantidad, 1, $idPedido);
-                $productoRepo->actualizoStock($productoId, 1, $cantidad);
+                $productoRepo->actualizoStock($productoId, 1, $cantidad, $empresa_id);
             } else {
                 // Es producto individual → reponer stock directamente
-                $productoRepo->actualizoStock($productoId, 1, $cantidad); // 1 = ingreso
+                $productoRepo->actualizoStock($productoId, 1, $cantidad, $empresa_id); // 1 = ingreso
 
                 $movimientoRepo->insertaMovimiento([
                     'pedido_id' => $idPedido,
@@ -548,18 +555,21 @@ class AdminPedidoRepository extends TablasSimplesAbstract
         $fechaDesde = $caja['openedAt'];
         $fechaHasta = $caja['closedAt'] ?? date('Y-m-d H:i:s');
         $usuarioId = $this->security->getUser()->getId();
+        $empresa_id = $this->security->getUser()->getEmpresa();
 
         $sql = "
         SELECT COUNT(*) FROM pedidos 
         WHERE estado_id = 1
           AND fecha_creado BETWEEN :desde AND :hasta
           AND usuario_id = :usuarioId
+            AND empresa_id = :empresaId
     ";
 
         return (int) $this->connection->fetchOne($sql, [
             'desde' => $fechaDesde,
             'hasta' => $fechaHasta,
             'usuarioId' => $usuarioId,
+            'empresaId' => $empresa_id
         ]);
     }
 

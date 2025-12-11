@@ -10,15 +10,16 @@ use Doctrine\DBAL\Exception;
 class DashboardRepository extends TablasSimplesAbstract
 {
     /**
+     * @param int $empresa_id
      * @return array
      * @throws Exception
      */
-    public function datosInicio(): array
+    public function datosInicio(int $empresa_id): array
     {
         $pedidoRepository = (new AdminPedidoRepository($this->connection, $this->security));
 
         $cajaRepository = (new AdminCajaRepository($this->connection, $this->security));
-        $estadoCaja = $cajaRepository->getCajaActual();
+        $estadoCaja = $cajaRepository->getCajaActual($empresa_id);
         // Si no hay caja abierta, retornamos sólo eso
         if (empty($estadoCaja)) {
             return [

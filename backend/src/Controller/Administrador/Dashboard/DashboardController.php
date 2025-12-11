@@ -15,7 +15,9 @@ class DashboardController extends AbstractController
     #[Route("/resumen", name: "api_dashboard_resumen", methods: ["GET"])]
     public function getDashboard(DashboardRepository $repository): JsonResponse
     {
-        $registro = $repository->datosInicio();
+        $empresa_id = $this->getUser()->getEmpresa();
+
+        $registro = $repository->datosInicio($empresa_id);
         if (empty($registro)) {
             return $this->json([
                 'status' => 'error',

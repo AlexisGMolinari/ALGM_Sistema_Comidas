@@ -315,4 +315,7 @@ ALTER TABLE `pedidos`
     ADD COLUMN `total_efectivo` DECIMAL(12,2) UNSIGNED NOT NULL DEFAULT 0 AFTER `total`,
   ADD COLUMN `total_transferencia` DECIMAL(12,2) UNSIGNED NOT NULL DEFAULT 0 AFTER `total_efectivo`;
 
-INSERT INTO `algm_carri_elarco`.`metodo_pago` (`id`, `nombre`) VALUES (3, 'mixto');
+INSERT INTO `metodo_pago` (`id`, `nombre`) VALUES (3, 'mixto');
+
+ALTER TABLE `caja`
+    CHANGE COLUMN `id` `id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT FIRST;

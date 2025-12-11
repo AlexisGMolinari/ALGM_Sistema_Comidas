@@ -56,6 +56,7 @@ class UsuarioRepository extends TablasSimplesAbstract
 	public function getUsuarioActual(int $id): array|bool
 	{
 		$sql = 'SELECT  us.nombre, us.email, us.roles FROM usuarios us 
+				INNER JOIN empresa emp ON us.empresa_id = emp.id
 				WHERE us.id = ?';
 		return $this->connection->fetchAssociative($sql, [$id]);
 	}
@@ -121,9 +122,11 @@ class UsuarioRepository extends TablasSimplesAbstract
     public function createUsuarioCompleto(array $postUsuario): int
     {
         $usuario = $postUsuario['usuario'];
+        $accesos = $postUsuario['accesos'];
         $usuario['password'] = password_hash( $usuario['password'], PASSWORD_BCRYPT);
         $this->connection->beginTransaction();
         $usuarioId = $this->createRegistro($usuario);
+        $this->agregoAccesos($accesos, $usuarioId);
         $this->connection->commit();
         return $usuarioId;
     }

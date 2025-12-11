@@ -23,7 +23,8 @@ class AdminCajaController extends AbstractController
     #[Route("/", name: "get_actual", methods: ["GET"])]
     public function cajaActual(AdminCajaRepository $repository): JsonResponse
     {
-        $registro = $repository->getCajaActual();
+        $empresa_id = $this->getUser()->getEmpresa();
+        $registro = $repository->getCajaActual($empresa_id);
         if (empty($registro)) {
             return $this->json([
                 'status' => 'error',
@@ -50,6 +51,7 @@ class AdminCajaController extends AbstractController
         $type->controloApertura($postValues, 0);
         $postValues['abierta_usuario_id'] = $this->getUser()->getId();
         $postValues['abierta'] = 1;
+        $postValues['empresa_id'] = $this->getUser()->getEmpresa();
         $repository->createRegistro($postValues);
         return $this->json([], 201);
     }

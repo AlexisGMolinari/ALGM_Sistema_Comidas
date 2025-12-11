@@ -2,8 +2,7 @@
 
 namespace App\Controller\Administrador;
 
-use App\Form\Contador\EmpresaType;
-use App\Repository\Administrador\AdminConciliacionRepository;
+use App\Form\Empresa\EmpresaType;
 use App\Repository\Administrador\AdminEmpresaRepository;
 use App\Repository\Configuracion\UsuarioRepository;
 use App\Repository\Empresa\Clientes\ClienteRepository;
@@ -72,6 +71,26 @@ class AdminEmpresasController extends AbstractController
     }
 
     /**
+     * @param int $id
+     * @param Request $request
+     * @param AdminEmpresaRepository $empresaRepository
+     * @param ClienteRepository $clienteRepository
+     * @return JsonResponse
+     * @throws Exception
+     */
+    #[Route('/{id}/clientes', name: 'getClientes', requirements: ['id' => '\d+'], methods: ["GET"])]
+    public function getClientes(int $id,
+                                Request $request,
+                                AdminEmpresaRepository $empresaRepository,
+                                ClienteRepository $clienteRepository): JsonResponse
+    {
+        $empresaRepository->checkIdExiste($id);
+        $clienteRepository->setEmpresa($id);
+        $clientes = $clienteRepository->getAllPaginados($request);
+        return $this->json($clientes);
+    }
+
+    /**
      * Actualiza datos de la empresa (Estado y controla Stock)
      *
      * @param int $id
@@ -91,28 +110,6 @@ class AdminEmpresasController extends AbstractController
         $putValues = $requestValidator->getRestBody();
         $type->controloActivacionEmpresaAdministrador($putValues);
         $empresaRepository->updateEmpresa($putValues, $id);
-        return $this->json([]);
-    }
-
-    /**
-     * Concilia ctas. ctes. de clientes.
-     *
-     * @param int $id
-     * @param int $idCliente
-     * @param AdminEmpresaRepository $empresaRepository
-     * @param AdminConciliacionRepository $conciliacionRepository
-     * @return JsonResponse
-     * @throws Exception
-     */
-	#[Route('/{id}/cliente/{idCliente}/conciliar-cta-cte', name: 'conciliar',
-        requirements: ['id' => '\d+', 'idCliente' => '\d+'], methods:["POST"])]
-	public function conciliarCtaCte(int $id, int $idCliente,
-                                    AdminEmpresaRepository $empresaRepository,
-                                    AdminConciliacionRepository $conciliacionRepository): JsonResponse
-    {
-        $empresaRepository->checkIdExiste($id);
-        $empresaRepository->checkClienteExiste($idCliente);
-        $conciliacionRepository->concilioCuenta($idCliente);
         return $this->json([]);
     }
 

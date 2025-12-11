@@ -103,7 +103,8 @@ class AdminPedidoController extends AbstractController
         unset($postValues['items']);
         $type->controloRegistro($postValues, 0);
         $postValues['usuario_id'] = $this->getUser()->getId();
-        $pedidoId = $pedidoRepository->createPedido($postValues, $items);
+        $empresa_id = $this->getUser()->getEmpresa();
+        $pedidoId = $pedidoRepository->createPedido($postValues, $items, $empresa_id);
 
         return $this->json(['message' => 'Pedido creado con éxito', 'id' => $pedidoId], 201);
 
@@ -143,7 +144,8 @@ class AdminPedidoController extends AbstractController
         $items = $postValues['items'] ?? [];
         unset($postValues['items']);
         $type->controloRegistroEdit($postValues, $id);
-        $repository->actualizaPedido($id, $items);
+        $empresa_id = $this->getUser()->getEmpresa();
+        $repository->actualizaPedido($id, $items, $empresa_id);
         return $this->json([]);
     }
 
@@ -189,8 +191,9 @@ class AdminPedidoController extends AbstractController
                                 AdminPedidoRepository $repository): JsonResponse
     {
         $repository->checkIdExiste($id);
+        $empresa_id = $this->getUser()->getEmpresa();
         $postValues['estado_id'] = 3;
-        $repository->anularPedido($postValues, $id);
+        $repository->anularPedido($postValues, $id, $empresa_id);
         return $this->json('Pedido anulado', 201);
     }
 
@@ -205,7 +208,8 @@ class AdminPedidoController extends AbstractController
                                    AdminPedidoRepository $repository): JsonResponse
     {
         $repository->checkIdExiste($id);
-        $repository->eliminarPedido($id);
+        $empresa_id = $this->getUser()->getEmpresa();
+        $repository->eliminarPedido($id, $empresa_id);
         return $this->json('Pedido eliminado', 201);
     }
 

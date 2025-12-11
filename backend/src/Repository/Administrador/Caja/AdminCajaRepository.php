@@ -18,14 +18,13 @@ class AdminCajaRepository extends TablasSimplesAbstract
         parent::__construct($connection, $security, 'caja');
     }
 
-    public function obtenerDatosDeCaja(array $caja): array
+    public function obtenerDatosDeCaja(array $caja, int $empresa_id): array
     {
         // Fechas de filtro: desde apertura hasta cierre o ahora si está abierta
         $fechaDesde = $caja['abierta_fecha'];
         $fechaHasta = $caja['cerrada_fecha'] ?? date('Y-m-d H:i:s');
 
-        $sql = "
-        SELECT 
+        $sql = "SELECT 
             COUNT(*) AS total_pedidos,
             SUM(total) AS total_ventas,
             SUM(CASE WHEN mp.nombre = 'efectivo' THEN total ELSE 0 END) AS ventas_efectivo,
@@ -34,7 +33,7 @@ class AdminCajaRepository extends TablasSimplesAbstract
         INNER JOIN metodo_pago mp ON p.metodo_pago_id = mp.id
         WHERE p.estado_id = 2 -- suponiendo que 1 = pedido completado
           AND p.fecha_creado BETWEEN :fechaDesde AND :fechaHasta
-    ";
+        AND p.empresa_id = " . $empresa_id;
 
         $result = $this->connection->fetchAssociative($sql, [
             'fechaDesde' => $fechaDesde,
@@ -50,13 +49,14 @@ class AdminCajaRepository extends TablasSimplesAbstract
     }
 
     /**
+     * @param int $empresa_id
      * @return array
      * @throws Exception
      */
-    public function getCajaActual(): array
+    public function getCajaActual(int $empresa_id): array
     {
         $sql = self::SQLBROWSE . "
-        WHERE c.cerrada_fecha IS NULL
+        WHERE c.cerrada_fecha IS NULL AND c.empresa_id = " . $empresa_id . "
         ORDER BY c.abierta_fecha DESC
         LIMIT 1";
         $caja = $this->connection->fetchAssociative($sql);
@@ -65,7 +65,7 @@ class AdminCajaRepository extends TablasSimplesAbstract
             return [];
         }
 
-        $ventas = $this->obtenerDatosDeCaja($caja);
+        $ventas = $this->obtenerDatosDeCaja($caja, $empresa_id);
 
         $montoInicial = (float) $caja['monto_inicial'];
         $totalVentas = (float) $ventas['total_ventas']; // usar valor calculado desde pedidos
@@ -86,7 +86,7 @@ class AdminCajaRepository extends TablasSimplesAbstract
             'expenses' => $totalGastos,
             'currentAmount' => $montoInicial + $totalVentas - $totalGastos,
             'notes' => $caja['observaciones'],
-            'salesCount' => (int)$ventas['total_pedidos'],
+            'salesCount' => $ventas['total_pedidos'],
             'salesBreakdown' => [
                 'efectivo' => (float)$ventas['ventas_efectivo'],
                 'transferencia' => (float)$ventas['ventas_transferencia'],
