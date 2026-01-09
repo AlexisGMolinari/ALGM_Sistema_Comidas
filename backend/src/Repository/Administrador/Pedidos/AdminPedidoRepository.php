@@ -20,14 +20,14 @@ use Throwable;
 class AdminPedidoRepository extends TablasSimplesAbstract
 {
     public const PATH_COMPROBANTES = 'imagenes/comprobantes';
-    private const BROWSE_SQL = "SELECT p.*, mp.nombre AS metodoPago, ep.nombre AS estadoPedido, u.nombre AS nombreUsuario 
+    private const BROWSE_SQL = "SELECT p.*, mp.nombre AS metodoPago, ep.nombre AS estadoPedido, u.nombre AS nombreUsuario
                                 FROM pedidos p
                                 INNER JOIN metodo_pago mp ON p.metodo_pago_id = mp.id
                                 INNER JOIN estado_pedido ep ON p.estado_id = ep.id
                                 INNER JOIN usuarios u ON p.usuario_id = u.id ";
     public function __construct(Connection $connection, Security $security)
     {
-        parent::__construct($connection, $security, 'pedidos');
+        parent::__construct($connection, $security, 'pedidos', true);
     }
 
     /**
@@ -40,14 +40,13 @@ class AdminPedidoRepository extends TablasSimplesAbstract
     {
         $camposRequest = $request->query->all();
         $usuarioId = $this->security->getUser()->getId();
-        $sql = self::BROWSE_SQL;
+        $empresaId = $this->security->getUser()->getEmpresa();
 
-        if ($all_pedidos) {
-            $continuaWhere = false; // No hay WHERE, puede filtrar libremente
-        } else {
-            $caja = $this->getCajaAbierta($usuarioId);
-            $sql .= " WHERE p.caja_id = " . (int)$caja['id'];
-            $continuaWhere = true;
+        $sql = self::BROWSE_SQL . " WHERE p.empresa_id = $empresaId";
+
+        if (!$all_pedidos) {
+            $caja = $this->getCajaAbierta($usuarioId, $empresaId);
+            $sql .= " AND p.caja_id = " . (int) $caja['id'];
         }
 
         $arrParam = [ 'p.id', 'p.nombre_cliente', 'mp.nombre', 'u.nombre', 'ep.nombre', 'p.total', 'p.fecha_creado'];
@@ -55,7 +54,7 @@ class AdminPedidoRepository extends TablasSimplesAbstract
         $paginador->setConnection($this->connection)
             ->setServerSideParams($camposRequest)
             ->setSql($sql)
-            ->setContinuaWhere($continuaWhere)
+            ->setContinuaWhere(true)
             ->setCamposAFiltrar($arrParam);  //pasar campos con alias de tabla
 
         return $paginador->getServerSideRegistros();
@@ -75,13 +74,14 @@ class AdminPedidoRepository extends TablasSimplesAbstract
 
     /**
      * @param int $idPedido
+     * @param int $empresa_id
      * @return array
      * @throws Exception
      */
-    public function getByIdPedido(int $idPedido): array
+    public function getByIdPedido(int $idPedido, int $empresa_id): array
     {
         $usuarioId = $this->security->getUser()->getId();
-        $caja = $this->getCajaAbierta($usuarioId);
+        $caja = $this->getCajaAbierta($usuarioId, $empresa_id);
 
         $sql = self::BROWSE_SQL . " WHERE p.id = :id AND p.caja_id = :caja_id";
         $pedido = $this->connection->fetchAssociative($sql, [
@@ -96,20 +96,23 @@ class AdminPedidoRepository extends TablasSimplesAbstract
 
     /**
      * @param int $usuarioId
+     * @param int $empresaId
      * @return array
      * @throws Exception
      */
-    private function getCajaAbierta(int $usuarioId): array
+    private function getCajaAbierta(int $usuarioId, int $empresaId): array
     {
         $caja = $this->connection->fetchAssociative(
-            "SELECT * FROM caja WHERE abierta_usuario_id = ? AND abierta = 1 LIMIT 1",
-            [$usuarioId]
+            "SELECT * FROM caja
+                    WHERE abierta_usuario_id = :usuario AND empresa_id = :empresa
+                    AND abierta = 1 LIMIT 1", ['usuario' => $usuarioId, 'empresa' => $empresaId]
         );
         if (!$caja) {
             throw new HttpException(400, "No hay caja abierta para este usuario.");
         }
         return $caja;
     }
+
 
     /**
      * @param array $postValues
@@ -121,7 +124,7 @@ class AdminPedidoRepository extends TablasSimplesAbstract
     public function createPedido(array $postValues, array $items, int $empresa_id): int
     {
         $this->connection->beginTransaction();
-        $postValues['caja_id'] = $this->getCajaAbierta($postValues['usuario_id'])['id'];
+        $postValues['caja_id'] = $this->getCajaAbierta($postValues['usuario_id'], $empresa_id)['id'];
 
         // Insertar Pedido
         $pedidoId = $this->createRegistro($postValues);
@@ -166,7 +169,7 @@ class AdminPedidoRepository extends TablasSimplesAbstract
         }
         // asienta historial
         (new AdminPedidoHistorialRepository($this->connection, $this->security))
-            ->agregoHistorialPedido($pedidoId, 10);
+            ->agregoHistorialPedido($pedidoId, 10, $empresa_id);
 
         $this->connection->commit();
         return $pedidoId;
@@ -182,13 +185,13 @@ class AdminPedidoRepository extends TablasSimplesAbstract
      */
     public function actualizaPedido(int $idPedido, array $items, int $empresa_id): void
     {
-        $pedido = $this->getByIdPedido($idPedido);
+        $pedido = $this->getByIdPedido($idPedido, $empresa_id);
         if($pedido['estado_id'] == 2){
             throw new HttpException(400, "El pedido ya se encuentra completado, no puede modificarlo.");
         }
 
         $detallePedidoRepository = (new AdminDetallePedidoRepository($this->connection, $this->security));
-        $detallePedido = $detallePedidoRepository->getDetalleByPedidoId($idPedido);
+        $detallePedido = $detallePedidoRepository->getDetalleByPedidoId($idPedido, $empresa_id);
 
         //Map de lo que existe por producto_id
         $actualPorProducto = [];
@@ -300,7 +303,7 @@ class AdminPedidoRepository extends TablasSimplesAbstract
             $this->connection->update('pedidos', ['total' => $nuevoTotal], ['id' => $idPedido]);
 
             (new AdminPedidoHistorialRepository($this->connection, $this->security))
-                ->agregoHistorialPedido($idPedido, 15);
+                ->agregoHistorialPedido($idPedido, 15, $empresa_id);
 
             $this->connection->commit();
         } catch (Throwable $e) {
@@ -343,7 +346,7 @@ class AdminPedidoRepository extends TablasSimplesAbstract
      */
     public function eliminarPedido(int $idPedido, int $empresa_id): void
     {
-        $registro = $this->getByIdPedido($idPedido);
+        $registro = $this->getByIdPedido($idPedido, $empresa_id);
         if($registro['estado_id'] != 3) {
             throw new HttpException(400, "El pedido debe ser anulado para eliminarlo.");
         }
@@ -352,7 +355,7 @@ class AdminPedidoRepository extends TablasSimplesAbstract
 
         // 1. Obtener los detalles del pedido
         $detallePedidoRepository = new AdminDetallePedidoRepository($this->connection, $this->security);
-        $detalles = $detallePedidoRepository->getDetalleByPedidoId($idPedido);
+        $detalles = $detallePedidoRepository->getDetalleByPedidoId($idPedido, $empresa_id);
 
         // 2. Reestablecer stock por cada producto
         $productoRepository = new ProductoRepository($this->connection, $this->security);
@@ -377,7 +380,7 @@ class AdminPedidoRepository extends TablasSimplesAbstract
         $this->connection->commit();
         // 5. Registrar historial de cambio de estado
         (new AdminPedidoHistorialRepository($this->connection, $this->security))
-            ->agregoHistorialPedido($idPedido, 35);
+            ->agregoHistorialPedido($idPedido, 35, $empresa_id);
     }
 
     /**
@@ -389,7 +392,7 @@ class AdminPedidoRepository extends TablasSimplesAbstract
      */
     public function anularPedido(array $postValues, int $idPedido, int $empresa_id): void
     {
-        $registro = $this->getByIdPedido($idPedido);
+        $registro = $this->getByIdPedido($idPedido, $empresa_id);
         if ($registro['estado_id'] === 3) {
             throw new \InvalidArgumentException("El pedido ya está anulado.");
         }
@@ -399,7 +402,7 @@ class AdminPedidoRepository extends TablasSimplesAbstract
         $productoRepo = new ProductoRepository($this->connection, $this->security);
         $movimientoRepo = new MovimientoStockRepository($this->connection, $this->security);
 
-        $detalles = $detallePedidoRepo->getDetalleByPedidoId($idPedido);
+        $detalles = $detallePedidoRepo->getDetalleByPedidoId($idPedido, $empresa_id);
 
         foreach ($detalles as $detalle) {
             $productoId = $detalle['producto_id'];
@@ -418,6 +421,7 @@ class AdminPedidoRepository extends TablasSimplesAbstract
                     'producto_id' => $productoId,
                     'tipo_movimiento_id' => 1, // Reposición
                     'cantidad' => $cantidad,
+                    'empresa_id' => $empresa_id,
                 ]);
             }
         }
@@ -426,7 +430,7 @@ class AdminPedidoRepository extends TablasSimplesAbstract
 
         // 5. Registrar historial de cambio de estado
         (new AdminPedidoHistorialRepository($this->connection, $this->security))
-            ->agregoHistorialPedido($idPedido, 35);
+            ->agregoHistorialPedido($idPedido, 35, $empresa_id);
 
         $this->connection->commit();
     }
@@ -439,21 +443,41 @@ class AdminPedidoRepository extends TablasSimplesAbstract
      */
     public function getPedidosUltimaSemana(): array
     {
-        $sql = "SELECT DATE(p.fecha_creado) as date, SUM(p.total) as totalSales, SUM(e.monto) as totalExpenses, COUNT(p.id) as ordersCount
-                FROM pedidos p
-                LEFT JOIN egresos e ON DATE(e.fecha) = DATE(p.fecha_creado)
-                WHERE p.fecha_creado >= DATE_SUB(CURDATE(), INTERVAL 7 DAY) AND p.estado_id = 2
-                GROUP BY DATE(p.fecha_creado)
-                ORDER BY DATE(p.fecha_creado) DESC";
-        return $this->connection->fetchAllAssociative($sql);
+        $empresaId = $this->security->getUser()->getEmpresa();
+
+        $sql = "
+        SELECT
+            DATE(p.fecha_creado) AS date,
+            SUM(p.total) AS totalSales,
+            (
+                SELECT IFNULL(SUM(e.monto), 0)
+                FROM egresos e
+                WHERE DATE(e.fecha) = DATE(p.fecha_creado)
+                  AND e.empresa_id = :empresa_id
+            ) AS totalExpenses,
+            COUNT(p.id) AS ordersCount
+        FROM pedidos p
+        WHERE p.fecha_creado >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+          AND p.estado_id != 3
+          AND p.empresa_id = :empresa_id
+        GROUP BY DATE(p.fecha_creado)
+        ORDER BY DATE(p.fecha_creado) DESC
+    ";
+
+        return $this->connection->fetchAllAssociative($sql, [
+            'empresa_id' => $empresaId
+        ]);
     }
+
 
     /**
      * Devuelve los reportes del mes
+     * @param int $empresaId
+     * @param string|null $month
      * @return array
      * @throws Exception
      */
-    public function getPedidosMensual(?string $month = null): array
+    public function getPedidosMensual(int $empresaId, ?string $month = null): array
     {
         // --- Determinar mes actual y anterior ---
         $year = date('Y');
@@ -474,28 +498,42 @@ class AdminPedidoRepository extends TablasSimplesAbstract
 
         // --- Consultas ---
         // 1. Ventas y pedidos
-        $sqlVentas = "SELECT DATE_FORMAT(p.fecha_creado, '%Y-%m') AS month, 
-                        SUM(p.total) AS totalSales, COUNT(p.id) AS ordersCount
-                  FROM pedidos p 
-                  WHERE DATE_FORMAT(p.fecha_creado, '%Y-%m') = :mes AND p.estado_id = 2
-                  GROUP BY month";
-        $ventasActual = $this->connection->fetchAssociative($sqlVentas, ['mes' => $mesActual]) ?: ['totalSales' => 0, 'ordersCount' => 0];
-        $ventasPrevias = $this->connection->fetchAssociative($sqlVentas, ['mes' => $mesAnterior]) ?: ['totalSales' => 0, 'ordersCount' => 0];
+        $sqlVentas = "SELECT 
+        DATE_FORMAT(p.fecha_creado, '%Y-%m') AS month, 
+        SUM(p.total) AS totalSales, 
+        COUNT(p.id) AS ordersCount
+        FROM pedidos p 
+        WHERE DATE_FORMAT(p.fecha_creado, '%Y-%m') = :mes
+          AND p.empresa_id = :empresa
+          AND p.estado_id != 3
+        GROUP BY month";
+
+        $paramsActual = ['mes' => $mesActual, 'empresa' => $empresaId];
+        $paramsAnterior = ['mes' => $mesAnterior, 'empresa' => $empresaId];
+
+        $ventasActual = $this->connection->fetchAssociative($sqlVentas, $paramsActual)
+            ?: ['totalSales' => 0, 'ordersCount' => 0];
+
+        $ventasPrevias = $this->connection->fetchAssociative($sqlVentas, $paramsAnterior)
+            ?: ['totalSales' => 0, 'ordersCount' => 0];
 
         // 2. Egresos
-        $sqlEgresos = "SELECT SUM(monto) AS totalExpenses 
-                   FROM egresos 
-                   WHERE DATE_FORMAT(fecha, '%Y-%m') = :mes";
-        $egresosActual = (float)($this->connection->fetchOne($sqlEgresos, ['mes' => $mesActual]) ?? 0);
-        $egresosPrevios = (float)($this->connection->fetchOne($sqlEgresos, ['mes' => $mesAnterior]) ?? 0);
+        $sqlEgresos = "SELECT SUM(monto) FROM egresos 
+                        WHERE DATE_FORMAT(fecha, '%Y-%m') = :mes AND empresa_id = :empresa";
+        $egresosActual = (float)($this->connection->fetchOne($sqlEgresos, $paramsActual) ?? 0);
+        $egresosPrevios = (float)($this->connection->fetchOne($sqlEgresos, $paramsAnterior) ?? 0);
+
 
         // 3. Egresos por categoría
         $sqlEgresosPorCat = "SELECT c.nombre AS name, SUM(e.monto) AS value 
-                         FROM egresos e
-                         INNER JOIN categoria_egreso_expensas c ON e.categoria_id = c.id
-                         WHERE DATE_FORMAT(e.fecha, '%Y-%m') = :mes
-                         GROUP BY c.nombre";
-        $egresosPorCategoria = $this->connection->fetchAllAssociative($sqlEgresosPorCat, ['mes' => $mesActual]);
+                            FROM egresos e
+                            INNER JOIN categoria_egreso_expensas c ON e.categoria_id = c.id
+                            WHERE DATE_FORMAT(e.fecha, '%Y-%m') = :mes AND e.empresa_id = :empresa
+                            GROUP BY c.nombre";
+        $egresosPorCategoria = $this->connection->fetchAllAssociative(
+            $sqlEgresosPorCat,
+            $paramsActual
+        );
 
         // --- Procesar resultados ---
         $ventasTotales = (float)$ventasActual['totalSales'];
@@ -542,11 +580,12 @@ class AdminPedidoRepository extends TablasSimplesAbstract
 
     /**
      * Contador de pedidos pendientes
-     * @param array|null $caja
+     * @param array $caja
+     * @param int $empresaId
      * @return int
      * @throws Exception
      */
-    public function contarPedidosPendientesEnCajaAbierta(?array $caja): int
+    public function contarPedidosPendientesEnCajaAbierta(array $caja, int $empresaId): int
     {
         if (!$caja) {
             return 0;
@@ -555,8 +594,6 @@ class AdminPedidoRepository extends TablasSimplesAbstract
         $fechaDesde = $caja['openedAt'];
         $fechaHasta = $caja['closedAt'] ?? date('Y-m-d H:i:s');
         $usuarioId = $this->security->getUser()->getId();
-        $empresa_id = $this->security->getUser()->getEmpresa();
-
         $sql = "
         SELECT COUNT(*) FROM pedidos 
         WHERE estado_id = 1
@@ -569,7 +606,7 @@ class AdminPedidoRepository extends TablasSimplesAbstract
             'desde' => $fechaDesde,
             'hasta' => $fechaHasta,
             'usuarioId' => $usuarioId,
-            'empresaId' => $empresa_id
+            'empresaId' => $empresaId
         ]);
     }
 

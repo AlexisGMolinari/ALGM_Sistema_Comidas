@@ -31,7 +31,6 @@ class AdminCajaController extends AbstractController
                 'message' => 'No hay caja abierta actualmente'
             ], 404);
         }
-
         return $this->json($registro);
     }
 
@@ -48,7 +47,7 @@ class AdminCajaController extends AbstractController
                            AdminCajaRepository $repository): JsonResponse
     {
         $postValues = $requestValidator->getRestBody();
-        $type->controloApertura($postValues, 0);
+        $type->controloApertura($postValues);
         $postValues['abierta_usuario_id'] = $this->getUser()->getId();
         $postValues['abierta'] = 1;
         $postValues['empresa_id'] = $this->getUser()->getEmpresa();

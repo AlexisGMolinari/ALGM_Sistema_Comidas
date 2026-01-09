@@ -40,7 +40,8 @@ class UsuarioController extends AbstractController
                                     AdministradorAccesosRepository $accesosRepository): JsonResponse
 	{
         $usuarioId = (int)$this->getUser()->getId();
-		$usuarioActual = $repository->getUsuarioActual($usuarioId);
+        $empresa_id = $this->getUser()->getEmpresa();
+		$usuarioActual = $repository->getUsuarioActual($usuarioId, $empresa_id);
         $usuarioActual['accesos'] = $repository->getUsuarioAccesos($usuarioId);
 		unset($usuarioActual['autocompletar_registros']);
 		return $this->json($usuarioActual);

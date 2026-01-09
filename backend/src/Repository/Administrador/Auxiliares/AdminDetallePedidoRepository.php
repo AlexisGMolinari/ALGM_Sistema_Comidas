@@ -15,17 +15,22 @@ class AdminDetallePedidoRepository extends TablasSimplesAbstract
     }
 
     /**
-     * @param int $idPedido
+     * @param int $pedidoId
+     * @param int $empresaId
      * @return array
      * @throws Exception
      */
-    public function getDetalleByPedidoId(int $idPedido): array
+    public function getDetalleByPedidoId(int $pedidoId, int $empresaId): array
     {
-        $sql = "SELECT dp.*, prod.nombre as nombre_producto FROM " . $this->nombreTabla . " dp
-                INNER JOIN producto prod ON prod.id = dp.producto_id";
-        $where = " WHERE dp.pedido_id = ? ";
-        $sql .= $where;
-        return $this->connection->fetchAllAssociative($sql, [$idPedido]);
+        $sql = "SELECT dp.*, prod.nombre AS nombre_producto FROM detalle_pedidos dp
+        INNER JOIN pedidos p ON p.id = dp.pedido_id
+        INNER JOIN producto prod ON prod.id = dp.producto_id
+        WHERE dp.pedido_id = ? AND p.empresa_id = ? AND prod.empresa_id = ?";
+        return $this->connection->fetchAllAssociative($sql, [
+            $pedidoId,
+            $empresaId,
+            $empresaId,
+        ]);
     }
 
 }

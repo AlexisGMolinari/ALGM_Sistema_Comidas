@@ -267,7 +267,7 @@ interface PedidoItemResponse {
 
 export const createPedido = async (
     customerName: string,
-    paymentMethod: 'cash' | 'transfer' | 'mixed',
+    paymentMethod: number,
     total: number,
     items: OrderItem[],
     receiptImage?: string,

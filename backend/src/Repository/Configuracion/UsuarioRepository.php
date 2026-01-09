@@ -48,17 +48,18 @@ class UsuarioRepository extends TablasSimplesAbstract
         return $this->connection->fetchAssociative($sql, $param);
     }
 
-	/**
-	 * @param int $id
-	 * @return array|bool
-	 * @throws Exception
-	 */
-	public function getUsuarioActual(int $id): array|bool
+    /**
+     * @param int $id
+     * @param int $empresa_id
+     * @return array|bool
+     * @throws Exception
+     */
+	public function getUsuarioActual(int $id, int $empresa_id): array|bool
 	{
-		$sql = 'SELECT  us.nombre, us.email, us.roles FROM usuarios us 
+		$sql = 'SELECT  us.nombre, us.email, us.roles, emp.id AS empresa_id FROM usuarios us 
 				INNER JOIN empresa emp ON us.empresa_id = emp.id
-				WHERE us.id = ?';
-		return $this->connection->fetchAssociative($sql, [$id]);
+				WHERE us.id = ? AND emp.id = ? ';
+		return $this->connection->fetchAssociative($sql, [$id, $empresa_id]);
 	}
 
     /**

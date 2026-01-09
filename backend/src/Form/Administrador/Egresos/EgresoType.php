@@ -20,7 +20,7 @@ class EgresoType extends AbstractTypes
             'id'             => new Assert\EqualTo($id),
             'monto'          => [new Assert\NotBlank(), new Assert\Range(['min' => 0.0])],
             'categoria_id'   => new Assert\Range(['min' => 1]),
-            'descripcion'    => [new Assert\NotBlank()],
+            'descripcion'    => [new Assert\Optional()],
         ]);
     }
 

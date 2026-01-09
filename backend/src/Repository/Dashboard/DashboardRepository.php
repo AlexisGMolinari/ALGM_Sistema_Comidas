@@ -32,7 +32,7 @@ class DashboardRepository extends TablasSimplesAbstract
             ];
         }
         // Pedidos pendientes (por ejemplo, estado_id = 1)
-        $pedidosPendientes = $pedidoRepository->contarPedidosPendientesEnCajaAbierta($estadoCaja);
+        $pedidosPendientes = $pedidoRepository->contarPedidosPendientesEnCajaAbierta($estadoCaja, $empresa_id);
 
         return [
             'salesTotal' => $estadoCaja['sales'],

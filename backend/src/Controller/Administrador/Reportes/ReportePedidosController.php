@@ -36,7 +36,8 @@ class ReportePedidosController extends AbstractController
     public function reporteMensual(Request $request, AdminPedidoRepository $repo): JsonResponse
     {
         $month = $request->query->get('month'); // por ejemplo '10' o '2025-10'
-        $data = $repo->getPedidosMensual($month);
+        $empresaId = $this->getUser()->getEmpresa();
+        $data = $repo->getPedidosMensual($empresaId, $month);
         return $this->json($data);
     }
 }

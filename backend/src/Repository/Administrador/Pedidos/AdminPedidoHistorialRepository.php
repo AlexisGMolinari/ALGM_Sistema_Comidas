@@ -34,16 +34,19 @@ class AdminPedidoHistorialRepository extends TablasSimplesAbstract
      * Agrega un registro al historial para el movimiento del pedido
      * @param int $idPedido
      * @param int $codigo
+     * @param int $empresa_id
      * @return void
      * @throws Exception
      */
     public function agregoHistorialPedido(int $idPedido,
-                                              int $codigo): void
+                                          int $codigo,
+                                          int $empresa_id): void
     {
         $arrHistorial = [
             'pedido_id' => $idPedido,
             'codigo' => $codigo,
             'usuario_id' => $this->security->getUser()->getId(),
+            'empresa_id' => $empresa_id
         ];
         $this->createRegistro($arrHistorial);
     }

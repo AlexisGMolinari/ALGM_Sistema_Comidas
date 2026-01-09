@@ -12,9 +12,11 @@ use Symfony\Component\HttpFoundation\Request;
 
 class EgresoRepository extends TablasSimplesAbstract
 {
-    private const SQLBROWSE = "SELECT e.*, cat.nombre AS nombreCategoria, u.nombre AS nombreUsuario FROM egresos e
-                                INNER JOIN categoria_egreso_expensas cat ON e.categoria_id = cat.id
-                                INNER JOIN usuarios u ON e.usuario_id = u.id";
+    private const SQLBROWSE = "SELECT e.*, cat.nombre AS nombreCategoria, u.nombre AS nombreUsuario
+    FROM egresos e
+    INNER JOIN categoria_egreso_expensas cat ON e.categoria_id = cat.id
+    INNER JOIN usuarios u ON u.id = e.usuario_id AND u.empresa_id = e.empresa_id ";
+
 
     public function __construct(Connection $connection, Security $security)
     {
@@ -23,14 +25,15 @@ class EgresoRepository extends TablasSimplesAbstract
 
     /**
      * @param Request $request
+     * @param int $empresa_id
      * @return array
      * @throws Exception
      */
-    public function getAllPaginados(Request $request): array
+    public function getAllPaginados(Request $request, int $empresa_id): array
     {
         $camposRequest = $request->query->all();
 
-        $sql = self::SQLBROWSE;
+        $sql = self::SQLBROWSE . " WHERE e.empresa_id = $empresa_id";
 
         $arrParam = [ 'e.id','e.monto', 'cat.nombre', 'u.nombre', 'e.descripcion', 'e.fecha'];
 
@@ -38,7 +41,7 @@ class EgresoRepository extends TablasSimplesAbstract
         $paginador->setConnection($this->connection)
             ->setServerSideParams($camposRequest)
             ->setSql($sql)
-            ->setContinuaWhere(false)
+            ->setContinuaWhere(true)
             ->setCamposAFiltrar($arrParam);  //pasar campos con alias de tabla
 
         return $paginador->getServerSideRegistros();
@@ -60,13 +63,15 @@ class EgresoRepository extends TablasSimplesAbstract
     /**
      * Inserta el egreso de la Caja
      * @param array $postValues
+     * @param int $empresa_id
      * @return void
      * @throws Exception
      */
-    public function createEgreso(array $postValues): void
+    public function createEgreso(array $postValues, int $empresa_id): void
     {
-        $caja = (new AdminCajaRepository($this->connection, $this->security))->getCajaActual();
+        $caja = (new AdminCajaRepository($this->connection, $this->security))->getCajaActual($empresa_id);
         $postValues['caja_id'] = (int)$caja['id'];
+        $postValues['empresa_id'] = $empresa_id;
 
         $this->createRegistro($postValues);
     }

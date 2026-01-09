@@ -48,7 +48,8 @@ class AdminPedidoController extends AbstractController
     public function getPedidoById(int $id, AdminPedidoRepository $pedidoRepository): JsonResponse
     {
         $pedidoRepository->checkIdExiste($id);
-        $registro = $pedidoRepository->getByIdPedido($id);
+        $empresa_id = $this->getUser()->getEmpresa();
+        $registro = $pedidoRepository->getByIdPedido($id, $empresa_id);
         return $this->json($registro);
     }
 
@@ -65,7 +66,8 @@ class AdminPedidoController extends AbstractController
                                      AdminDetallePedidoRepository $detalleRepository): JsonResponse
     {
         $pedidoRepository->checkIdExiste($pedidoId);
-        $registro = $detalleRepository->getDetalleByPedidoId($pedidoId);
+        $empresaId = $this->getUser()->getEmpresa();
+        $registro = $detalleRepository->getDetalleByPedidoId($pedidoId, $empresaId);
         return $this->json($registro);
     }
 
@@ -107,7 +109,6 @@ class AdminPedidoController extends AbstractController
         $pedidoId = $pedidoRepository->createPedido($postValues, $items, $empresa_id);
 
         return $this->json(['message' => 'Pedido creado con éxito', 'id' => $pedidoId], 201);
-
     }
 
     /**

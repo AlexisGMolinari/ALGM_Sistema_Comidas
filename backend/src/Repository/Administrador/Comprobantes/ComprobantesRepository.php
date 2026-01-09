@@ -18,10 +18,19 @@ class ComprobantesRepository extends TablasSimplesAbstract
     public function getAllPaginados(Request $request): array
     {
         $camposRequest = $request->query->all();
-        $sql = "SELECT p.id, p.nombre_cliente, p.total, p.estado_id, ep.nombre, p.comprobante_img, p.fecha_creado 
-                FROM " . $this->table . " p
-                INNER JOIN estado_pedido ep ON p.estado_id = ep.id
-                WHERE p.metodo_pago_id = 2";
+        $empresaId = $this->security->getUser()->getEmpresa();
+        $sql = "SELECT p.id,
+                   p.nombre_cliente,
+                   p.total,
+                   p.estado_id,
+                   ep.nombre,
+                   p.comprobante_img,
+                   p.fecha_creado
+            FROM {$this->table} p
+            INNER JOIN estado_pedido ep ON p.estado_id = ep.id
+            WHERE p.metodo_pago_id = 2
+              AND p.estado_id <> 3
+              AND p.empresa_id = {$empresaId}";
 
         $arrParam = [ 'p.id', 'p.nombre_cliente', 'ep.nombre', 'p.total', 'p.fecha_creado'];
         $paginador = new Paginador();
@@ -45,7 +54,7 @@ class ComprobantesRepository extends TablasSimplesAbstract
         // Validar formato de fechas (Y-m-d)
         $fechaDesde = \DateTime::createFromFormat('Y-m-d', $desde);
         $fechaHasta = \DateTime::createFromFormat('Y-m-d', $hasta);
-
+        $empresaId = $this->security->getUser()->getEmpresa();
         $errores = [];
 
         if (!$fechaDesde || $fechaDesde->format('Y-m-d') !== $desde) {
@@ -68,15 +77,25 @@ class ComprobantesRepository extends TablasSimplesAbstract
         $fechaDesde->setTime(0, 0, 00);
         $fechaHasta->setTime(23, 59, 59);
 
-        $sql = "SELECT p.id, p.nombre_cliente, p.total, p.estado_id, ep.nombre, p.comprobante_img, p.fecha_creado
+        $sql = "SELECT p.id,
+                   p.nombre_cliente,
+                   p.total,
+                   p.estado_id,
+                   ep.nombre,
+                   p.comprobante_img,
+                   p.fecha_creado
             FROM {$this->table} p
             INNER JOIN estado_pedido ep ON p.estado_id = ep.id
-            WHERE p.fecha_creado BETWEEN :desde AND :hasta AND p.metodo_pago_id = 2
+            WHERE p.fecha_creado BETWEEN :desde AND :hasta
+              AND p.metodo_pago_id = 2
+              AND p.estado_id <> 3
+              AND p.empresa_id = :empresa
             ORDER BY p.fecha_creado DESC";
 
         return $this->connection->fetchAllAssociative($sql, [
-            'desde' => $fechaDesde->format('Y-m-d H:i:s'),
-            'hasta' => $fechaHasta->format('Y-m-d H:i:s')
+            'desde'   => $fechaDesde->format('Y-m-d H:i:s'),
+            'hasta'   => $fechaHasta->format('Y-m-d H:i:s'),
+            'empresa' => $empresaId
         ]);
     }
 }

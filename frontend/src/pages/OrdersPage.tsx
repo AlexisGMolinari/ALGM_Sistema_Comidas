@@ -223,10 +223,18 @@ const OrdersPage: React.FC = () => {
         }
         return true
     }
-    const backendPaymentMethod: "cash" | "transfer" =
-        splitPaymentMethod === "mixed"
-            ? (splitPayment.transfer > 0 ? "transfer" : "cash")
-            : splitPaymentMethod;
+    const mapPaymentMethodToId = (): number => {
+        switch (splitPaymentMethod) {
+            case "cash":
+                return 1;
+            case "transfer":
+                return 2;
+            case "mixed":
+                return 3;
+            default:
+                return 1;
+        }
+    };
     const handleProcessSplit = async () => {
         if (!selectedOrderForSplit) return;
 
@@ -316,7 +324,7 @@ const OrdersPage: React.FC = () => {
             // 1️⃣ Crear la nueva orden
             const newOrder = await createPedido(
                 splitCustomerName,
-                backendPaymentMethod, // 'cash' | 'transfer' | 'mixed'
+                mapPaymentMethodToId(), // ✅ 1 | 2 | 3
                 selectedTotal,
                 selectedItems.map((item) => ({
                     id: item.id,
@@ -325,7 +333,6 @@ const OrdersPage: React.FC = () => {
                     quantity: item.selectedQuantity,
                 })),
                 "",
-                // 👇 acá está la clave: usamos los valores del usuario si es "mixed"
                 splitPaymentMethod === "cash"
                     ? selectedTotal
                     : splitPaymentMethod === "mixed"
@@ -509,7 +516,7 @@ const OrdersPage: React.FC = () => {
 
                 await createPedido(
                     customerName,
-                    paymentMethod,
+                    mapPaymentMethodToId(),
                     cartTotal,
                     cart,
                     transferImageUrl,
@@ -619,7 +626,7 @@ const OrdersPage: React.FC = () => {
         try {
             await createPedido(
                 customerName,
-                "cash", // métod por defecto, o podrías dejar "undefined" si lo maneja el backend
+                1, // métod por defecto, o podrías dejar "undefined" si lo maneja el backend
                 cartTotal,
                 cart,
                 "", // sin comprobante
@@ -1216,7 +1223,7 @@ const OrdersPage: React.FC = () => {
                         <div className="fixed inset-0 bg-gray-500 opacity-75"></div>
                         <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full p-6 relative z-10 max-h-[90vh] overflow-y-auto">
                             <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-lg font-medium text-center">Dividir Pedido #{selectedOrderForSplit.id}</h3>
+                                <h3 className="text-lg font-medium text-center bg-gray-400">Dividir Pedido #{selectedOrderForSplit.id}</h3>
                                 <label className="inline-flex items-center space-x-2">
                                     <input
                                         type="checkbox"
@@ -1291,7 +1298,7 @@ const OrdersPage: React.FC = () => {
                                                         max={item.quantity}
                                                         value={item.selectedQuantity}
                                                         onChange={(e) => handleSplitQuantityChange(item.id, Number.parseInt(e.target.value) || 0)}
-                                                        className="w-16 px-2 py-1 text-center border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-[#FF6B35]"
+                                                        className="w-16 px-2 py-1 text-center text-gray-800 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-[#FF6B35]"
                                                     />
 
                                                     <button
@@ -1335,7 +1342,7 @@ const OrdersPage: React.FC = () => {
                             <div className="mb-4">
                                 <h4 className="text-sm font-medium text-gray-700 mb-2">Método de Pago</h4>
                                 <div className="space-y-2">
-                                    <label className="inline-flex items-center">
+                                    <label className="inline-flex items-center text-gray-700">
                                         <input
                                             type="radio"
                                             name="splitPaymentMethod"
@@ -1350,7 +1357,7 @@ const OrdersPage: React.FC = () => {
                     </span>
                                     </label>
 
-                                    <label className="inline-flex items-center">
+                                    <label className="inline-flex items-center text-gray-700">
                                         <input
                                             type="radio"
                                             name="splitPaymentMethod"
@@ -1365,7 +1372,7 @@ const OrdersPage: React.FC = () => {
                     </span>
                                     </label>
 
-                                    <label className="inline-flex items-center">
+                                    <label className="inline-flex items-center text-gray-700">
                                         <input
                                             type="radio"
                                             name="splitPaymentMethod"

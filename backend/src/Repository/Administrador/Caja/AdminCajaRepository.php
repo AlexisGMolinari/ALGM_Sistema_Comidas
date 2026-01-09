@@ -10,7 +10,7 @@ use Symfony\Bundle\SecurityBundle\Security;
 class AdminCajaRepository extends TablasSimplesAbstract
 {
     private const SQLBROWSE = "SELECT c.*, u.nombre AS nombreUsuario FROM caja c
-                                INNER JOIN usuarios u ON u.id = c.abierta_usuario_id";
+                INNER JOIN usuarios u ON u.id = c.abierta_usuario_id AND u.empresa_id = c.empresa_id ";
 
     public function __construct(Connection $connection, Security $security)
     {
@@ -18,6 +18,12 @@ class AdminCajaRepository extends TablasSimplesAbstract
         parent::__construct($connection, $security, 'caja');
     }
 
+    /**
+     * @param array $caja
+     * @param int $empresa_id
+     * @return int[]
+     * @throws Exception
+     */
     public function obtenerDatosDeCaja(array $caja, int $empresa_id): array
     {
         // Fechas de filtro: desde apertura hasta cierre o ahora si está abierta
@@ -25,19 +31,22 @@ class AdminCajaRepository extends TablasSimplesAbstract
         $fechaHasta = $caja['cerrada_fecha'] ?? date('Y-m-d H:i:s');
 
         $sql = "SELECT 
-            COUNT(*) AS total_pedidos,
-            SUM(total) AS total_ventas,
-            SUM(CASE WHEN mp.nombre = 'efectivo' THEN total ELSE 0 END) AS ventas_efectivo,
-            SUM(CASE WHEN mp.nombre = 'transferencia' THEN total ELSE 0 END) AS ventas_transferencia
+            COUNT(p.id) AS total_pedidos,
+            COALESCE(SUM(p.total), 0) AS total_ventas,
+            COALESCE(SUM(CASE WHEN mp.nombre = 'efectivo' THEN p.total ELSE 0 END), 0) AS ventas_efectivo,
+            COALESCE(SUM(CASE WHEN mp.nombre = 'transferencia' THEN p.total ELSE 0 END), 0) AS ventas_transferencia
         FROM pedidos p
-        INNER JOIN metodo_pago mp ON p.metodo_pago_id = mp.id
-        WHERE p.estado_id = 2 -- suponiendo que 1 = pedido completado
+        INNER JOIN metodo_pago mp ON mp.id = p.metodo_pago_id
+        WHERE p.estado_id = 2
+          AND p.empresa_id = :empresa_id
           AND p.fecha_creado BETWEEN :fechaDesde AND :fechaHasta
-        AND p.empresa_id = " . $empresa_id;
+          AND p.caja_id = :caja_id ";
 
         $result = $this->connection->fetchAssociative($sql, [
+            'empresa_id' => $empresa_id,
             'fechaDesde' => $fechaDesde,
             'fechaHasta' => $fechaHasta,
+            'caja_id'    => (int) $caja['id'],
         ]);
 
         return $result ?: [
@@ -56,10 +65,12 @@ class AdminCajaRepository extends TablasSimplesAbstract
     public function getCajaActual(int $empresa_id): array
     {
         $sql = self::SQLBROWSE . "
-        WHERE c.cerrada_fecha IS NULL AND c.empresa_id = " . $empresa_id . "
+        WHERE c.cerrada_fecha IS NULL AND c.empresa_id = :empresa_id
         ORDER BY c.abierta_fecha DESC
         LIMIT 1";
-        $caja = $this->connection->fetchAssociative($sql);
+        $caja = $this->connection->fetchAssociative($sql, [
+            'empresa_id' => $empresa_id
+        ]);
 
         if (!$caja) {
             return [];
@@ -69,7 +80,7 @@ class AdminCajaRepository extends TablasSimplesAbstract
 
         $montoInicial = (float) $caja['monto_inicial'];
         $totalVentas = (float) $ventas['total_ventas']; // usar valor calculado desde pedidos
-        $totalGastos = $this->obtenerEgresosDeCaja((int)$caja['id']);
+        $totalGastos = $this->obtenerEgresosDeCaja((int)$caja['id'], $empresa_id);
         $montoFinal = isset($caja['monto_final']) ? (float)$caja['monto_final'] : null;
 
         return [
@@ -95,17 +106,24 @@ class AdminCajaRepository extends TablasSimplesAbstract
     }
 
     /**
-     * @param int $idCaja
+     * @param int $cajaId
+     * @param int $empresaId
      * @return float
      * @throws Exception
      */
-    private function obtenerEgresosDeCaja(int $idCaja): float
+    private function obtenerEgresosDeCaja(int $cajaId, int $empresaId): float
     {
-        $sql = "SELECT SUM(e.monto) FROM egresos e
-                INNER JOIN caja c ON c.id = e.caja_id
-                WHERE e.caja_id = ?";
-        return (float) $this->connection->fetchOne($sql, [$idCaja]) ?? 0.0;
+        $sql = "SELECT COALESCE(SUM(e.monto), 0)
+        FROM egresos e
+        WHERE e.caja_id = :caja_id
+          AND e.empresa_id = :empresa_id ";
+
+        return (float) $this->connection->fetchOne($sql, [
+            'caja_id'   => $cajaId,
+            'empresa_id'=> $empresaId,
+        ]);
     }
+
 
 
 }

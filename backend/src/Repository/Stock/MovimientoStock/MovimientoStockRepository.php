@@ -11,7 +11,7 @@ class MovimientoStockRepository extends TablasSimplesAbstract
 {
     public function __construct(Connection $connection, Security $security)
     {
-        parent::__construct($connection, $security, 'movimiento_stock');
+        parent::__construct($connection, $security, 'movimiento_stock', true);
     }
 
     /**

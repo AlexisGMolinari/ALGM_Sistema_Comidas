@@ -26,7 +26,8 @@ class EgresosController extends AbstractController
     public function index(GetRequestValidator $requestValidator,
                           EgresoRepository   $repository): JsonResponse
     {
-        $registros = $repository->getAllPaginados($requestValidator->getRequest());
+        $empresa_id = $this->getUser()->getEmpresa();
+        $registros = $repository->getAllPaginados($requestValidator->getRequest(), $empresa_id);
         return $this->json($registros);
     }
 
@@ -75,8 +76,9 @@ class EgresosController extends AbstractController
     {
         $valores = $requestValidator->getRestBody();
         $type->controloRegistro($valores, 0);
+        $empresa_id = $this->getUser()->getEmpresa();
         $valores['usuario_id'] = $this->getUser()->getId();
-        $repository->createEgreso($valores);
+        $repository->createEgreso($valores, $empresa_id);
         return $this->json([], 201);
     }
 

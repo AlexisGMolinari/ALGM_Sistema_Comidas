@@ -15,7 +15,7 @@ class ProductoRepository extends TablasSimplesAbstract
 {
     public function __construct(Connection $connection, Security $security)
     {
-        parent::__construct($connection, $security, 'producto');
+        parent::__construct($connection, $security, 'producto', true);
     }
 
     /**
