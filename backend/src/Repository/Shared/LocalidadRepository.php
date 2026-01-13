@@ -22,9 +22,7 @@ class LocalidadRepository extends TablasSimplesAbstract
     public function getByNombreCodPostalyPcia(string $nombre, string $codPostal, int $pcia): array|bool
     {
         $sql = "select * from localidad l  
-                where l.nombre = ? 
-                and l.codigo_postal = ? 
-                and l.provincia_afip = ?";
+                where l.nombre = ? ";
         return $this->connection->fetchAssociative($sql, [$nombre, $codPostal, $pcia]);
     }
 

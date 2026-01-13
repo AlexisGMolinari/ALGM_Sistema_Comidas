@@ -463,7 +463,6 @@ class AdminPedidoRepository extends TablasSimplesAbstract
         GROUP BY DATE(p.fecha_creado)
         ORDER BY DATE(p.fecha_creado) DESC
     ";
-
         return $this->connection->fetchAllAssociative($sql, [
             'empresa_id' => $empresaId
         ]);

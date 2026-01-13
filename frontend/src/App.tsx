@@ -12,6 +12,7 @@ import ReportsPage from './pages/ReportsPage';
 import ComprobantesPage from './pages/ComprobantesPage';
 import AdminPage from './pages/Admin';
 import Layout from './components/Layout';
+import SuperAdmin from './pages/SuperAdmin';
 import './App.css';
 
 // Protected route component
@@ -22,6 +23,23 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   }
   return <>{children}</>;
 };
+
+const SuperAdminRoute = ({ children }: { children: React.ReactNode }) => {
+    const { user } = useAuth();
+
+    if (!user) {
+        return <Navigate to="/login" replace />;
+    }
+
+    const roles = user.roles?.split(',').map(r => r.trim()) || [];
+
+    if (!roles.includes('ROLE_SUPERADMIN')) {
+        return <Navigate to="/dashboard" replace />;
+    }
+
+    return <>{children}</>;
+};
+
 
 // Admin route component
 // const AdminRoute = ({ children }: { children: React.ReactNode }) => {
@@ -126,6 +144,18 @@ function App() {
                     </ProtectedRoute>
                 }
             />
+
+            <Route
+                path="/superadmin"
+                element={
+                    <SuperAdminRoute>
+                        <Layout>
+                            <SuperAdmin />
+                        </Layout>
+                    </SuperAdminRoute>
+                }
+            />
+
         </Routes>
       </Router>
     </AuthProvider>

@@ -13,7 +13,7 @@ import {
     LogOut,
     User,
     NotebookTextIcon,
-    UserCog,
+    UserCog, BookUser,
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -24,7 +24,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const { user, logout } = useAuth();
     const navigate = useNavigate();
-    const isAdmin = user?.roles === 'ROLE_ADMIN';
+    const roles = user?.roles?.split(',').map(r => r.trim()) || [];
+    const isAdmin = roles.includes('ROLE_ADMIN');
+    const isSuperAdmin = roles.includes('ROLE_SUPERADMIN');
+
 
     const handleLogout = () => {
         logout();
@@ -38,7 +41,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         to: string;
         icon: React.ReactNode;
         text: string;
-        access: 'all' | 'ROLE_ADMIN';
+        access: 'all' | 'ROLE_ADMIN' | 'ROLE_SUPERADMIN';
         isGreen?: boolean;
     }
 
@@ -51,11 +54,17 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         { to: '/reports', icon: <PieChart size={20} />, text: 'Reportes', access: 'ROLE_ADMIN' },
         { to: '/comprobantes', icon: <NotebookTextIcon size={20} />, text: 'Comprobantes', access: 'ROLE_ADMIN' },
         { to: '/admin', icon: <UserCog size={20} />, text: 'Administrador', access: 'ROLE_ADMIN', isGreen: true },
+        { to: '/superadmin', icon: <BookUser size={20} />, text: 'Super Admin', access: 'ROLE_SUPERADMIN', isGreen: true,},
+
     ];
 
-    const filteredMenuItems = menuItems.filter(
-        (item) => item.access === 'all' || (item.access === 'ROLE_ADMIN' && isAdmin)
-    );
+    const filteredMenuItems = menuItems.filter(item => {
+        if (item.access === 'all') return true;
+        if (item.access === 'ROLE_ADMIN') return isAdmin;
+        if (item.access === 'ROLE_SUPERADMIN') return isSuperAdmin;
+        return false;
+    });
+
 
     return (
         <div className="flex h-screen bg-gradient-to-br from-blue-900 via-blue-800 to-blue-700 text-white">

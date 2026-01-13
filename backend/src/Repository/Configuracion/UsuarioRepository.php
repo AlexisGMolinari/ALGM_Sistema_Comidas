@@ -15,6 +15,25 @@ class UsuarioRepository extends TablasSimplesAbstract
         parent::__construct($connection, $security,  'usuarios');
     }
 
+    /**
+     * @param bool $soloActivos
+     * @param bool $filtraEmpresa
+     * @return array
+     * @throws Exception
+     */
+    public function getAllPorEmpresa(bool $soloActivos, bool $filtraEmpresa): array
+    {
+        $sql = 'SELECT u.id, u.nombre, u.email, u.activo, u.roles, u.empresa_id FROM ' . $this->nombreTabla . ' u ';
+
+        if ($soloActivos) {
+            $sql .= ' and u.activo = 1 ';
+        }
+        if ($filtraEmpresa) {
+           $sql .= ' WHERE u.empresa_id = ' . $this->security->getUser()->getEmpresa();
+        }
+        return $this->connection->fetchAllAssociative($sql);
+    }
+
 
     /**
      * Devuelve el registro SIN la clave
@@ -28,6 +47,19 @@ class UsuarioRepository extends TablasSimplesAbstract
 			. ' from ' . $this->nombreTabla . ' u'
 			. ' where u.id  = ?';
 		return $this->connection->fetchAssociative($sql, [$id]);
+    }
+
+    /**
+     * Devuelve todos los usuarios ADMIN SIN empresa
+     * @return array
+     * @throws Exception
+     */
+    public function getUsersSinEmpresa(): array
+    {
+        $sql = 'select u.id, u.nombre, u.email, u.roles, u.activo '
+            . ' from ' . $this->nombreTabla . ' u'
+            . ' where u.empresa_id is null and u.roles like "%ROLE_ADMIN%"';
+        return $this->connection->fetchAllAssociative($sql);
     }
 
     /**
@@ -113,6 +145,7 @@ class UsuarioRepository extends TablasSimplesAbstract
             . 'order by ac.id';
         return $this->connection->fetchAllAssociative($sql, [$idUsuario]);
     }
+
 
     /**
      * Guarda el nuevo usuario, los accesos y devuelve el id del nuevo usuario

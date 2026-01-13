@@ -2,10 +2,12 @@
 
 namespace App\Controller\Administrador;
 
+use App\Form\Administrador\Localidad\LocalidadType;
 use App\Form\Empresa\EmpresaType;
 use App\Repository\Administrador\AdminEmpresaRepository;
 use App\Repository\Configuracion\UsuarioRepository;
 use App\Repository\Empresa\Clientes\ClienteRepository;
+use App\Repository\Shared\LocalidadRepository;
 use App\Service\GetRequestValidator;
 use Doctrine\DBAL\Exception;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -90,6 +92,61 @@ class AdminEmpresasController extends AbstractController
         return $this->json($clientes);
     }
 
+    /**
+     * @param AdminEmpresaRepository $repository
+     * @param GetRequestValidator $requestValidator
+     * @param EmpresaType $type
+     * @return JsonResponse
+     * @throws Exception
+     */
+    #[Route('/', name: 'creo_empresa', methods: ["POST"])]
+    public function altaEmpresa(AdminEmpresaRepository $repository,
+                                GetRequestValidator $requestValidator,
+                                EmpresaType $type): JsonResponse
+    {
+        $postValues = $requestValidator->getRestBody();
+        $type->controloRegistro($postValues, 0);
+        $repository->createRegistro($postValues);
+        return $this->json([]);
+    }
+
+    // --------------------------- LOCALIDADES
+
+    /**
+     * @param LocalidadRepository $localidadRepo
+     * @return JsonResponse
+     * @throws Exception
+     */
+    #[Route('/localidades', name: 'getall_localidad', methods: ["GET"])]
+    public function getAllLocalidades(LocalidadRepository $localidadRepo): JsonResponse
+    {
+        $result = $localidadRepo->getall(true, true, true);
+        return $this->json($result);
+    }
+
+
+    /**
+     * @param GetRequestValidator $requestValidator
+     * @param LocalidadType $typeLocalidad
+     * @param LocalidadRepository $repositoryLocalidad
+     * @return JsonResponse
+     * @throws Exception
+     */
+    #[Route('/localidades/alta', name: 'creo_localidad', methods: ["POST"])]
+    public function creoLocalidad(GetRequestValidator $requestValidator,
+                                  LocalidadType $typeLocalidad,
+                                  LocalidadRepository $repositoryLocalidad): JsonResponse
+    {
+        $postValues = $requestValidator->getRestBody();
+        $typeLocalidad->controloRegistro($postValues, 0);
+        $repositoryLocalidad->createRegistro($postValues);
+        return $this->json([]);
+    }
+
+
+
+
+    // ------------------------------ LOCALIDADES
     /**
      * Actualiza datos de la empresa (Estado y controla Stock)
      *

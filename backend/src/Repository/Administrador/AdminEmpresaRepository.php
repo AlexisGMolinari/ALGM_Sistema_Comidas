@@ -27,11 +27,11 @@ class AdminEmpresaRepository extends TablasSimplesAbstract
 	 */
 	public function getAllPaginados(Request $request): array {
         $camposRequest = $request->query->all();
-		$sql = "SELECT em.id, em.nombre_fantasia, us.nombre, em.controla_stock, us.activo
+		$sql = "SELECT em.id, em.nombre, em.url_sitioweb, us.nombre as nombre_usuario, us.activo
             FROM empresa em
-            inner join usuarios us on em.id = us.empresa_id
-            where us.roles = 'ROLE_USER'";
-		$arrParam = [ 'em.id', 'em.nombre_fantasia', 'us.nombre'];
+            LEFT join usuarios us on em.id = us.empresa_id ";
+        //    where us.roles = 'ROLE_USER'";
+		$arrParam = [ 'em.id', 'em.nombre', 'us.nombre', 'em.url_sitioweb'];
 
         $paginador = new Paginador();
         $paginador->setConnection($this->connection)

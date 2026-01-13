@@ -12,6 +12,7 @@ use Doctrine\DBAL\Exception;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Validator\Constraints\Json;
 
 #[Route('/api/usuarios',  name: 'app_usuario_')]
 class UsuarioController extends AbstractController
@@ -25,7 +26,7 @@ class UsuarioController extends AbstractController
     #[Route('/', name: 'index', methods: ['GET'])]
     public function index(UsuarioRepository $repository): JsonResponse
     {
-        $usuarios = $repository->getAll(false, false);
+        $usuarios = $repository->getAllPorEmpresa(false, true);
         return $this->json($usuarios);
     }
 
@@ -60,6 +61,18 @@ class UsuarioController extends AbstractController
     {
         $repository->checkIdExiste($id);
         $usuario = $repository->getByIdSinPass($id);
+        return $this->json($usuario);
+    }
+
+    /**
+     * @param UsuarioRepository $repository
+     * @return JsonResponse
+     * @throws Exception
+     */
+    #[Route('/sin-empresa', name: 'get_users_sin_empresa', methods: ['GET'])]
+    public function getUsuariosSinEmpresa(UsuarioRepository $repository): JsonResponse
+    {
+        $usuario = $repository->getUsersSinEmpresa();
         return $this->json($usuario);
     }
 
@@ -136,6 +149,27 @@ class UsuarioController extends AbstractController
         $usuario = $postValues['usuario'];
         $type->controloRegistro($usuario, $id);
         $repository->updateUsuario($postValues, $id);
+        return $this->json([]);
+    }
+
+    /**
+     * @param int $id
+     * @param UsuarioRepository $repository
+     * @param GetRequestValidator $requestValidator
+     * @param UsuarioType $type
+     * @return JsonResponse
+     * @throws Exception
+     */
+    #[Route('/{id}/asigno-empresa', name: 'asigno_empresa', requirements: ['id' => '\d+'], methods: ['PUT'])]
+    public function asignoEmpresa(int $id,
+                                  UsuarioRepository $repository,
+                                  GetRequestValidator $requestValidator,
+                                  UsuarioType $type): JsonResponse
+    {
+        $postValues = $requestValidator->getRestBody();
+        $repository->checkIdExiste($id);
+        $type->controloDatos($postValues, $id);
+        $repository->updateRegistro($postValues, $id);
         return $this->json([]);
     }
 }

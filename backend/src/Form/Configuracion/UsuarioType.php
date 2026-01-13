@@ -4,13 +4,47 @@
 namespace App\Form\Configuracion;
 
 use App\Form\AbstractTypes;
+use App\Repository\Empresa\EmpresaRepository;
+use Doctrine\DBAL\Exception;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\Validator\Constraints as Assert;
 
 class UsuarioType extends AbstractTypes
 {
+    /**
+     * @param int $id
+     * @return Assert\Collection
+     */
+    private function constrainsDatos(int $id): Assert\Collection
+    {
+        return new Assert\Collection([
+            'id' => [new Assert\NotBlank(), new Assert\Range(['min' => $id])],
+            'empresa_id' => [new Assert\NotBlank(), new Assert\Range(['min' => 1])],
+        ]);
+    }
 
+    /**
+     * @param array $postValues
+     * @param int $id
+     * @return void
+     * @throws Exception
+     */
+    public function controloDatos(array $postValues, int $id): void
+    {
+        $constCompr = $this->constrainsDatos($id);
+        $errors = $this->validation->validate($postValues, $constCompr);
+        if (0 !== count($errors)) {
+            $mensaje = $this->traduccionError($errors[0]);
+            throw new HttpException(400, $mensaje);
+        }
+        $this->controlFK('Empresa', $postValues['empresa_id'], true,
+            (new EmpresaRepository($this->connection, $this->security)));
+    }
 
+    /**
+     * @param int $id
+     * @return Assert\Collection
+     */
 	public function constrains(int $id): Assert\Collection
 	{
 		$arrConst =[

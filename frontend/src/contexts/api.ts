@@ -539,3 +539,31 @@ export const updateExpense = async (id: number, payload: Partial<ExpenseAPIRespo
 export const deleteExpense = async (id: number): Promise<void> =>
     await api.delete(`/egreso/${id}`);
 
+// ================= SUPER ADMIN =================
+
+export const superAdmin = {
+    // EMPRESAS
+    createEmpresa: async (payload: any) =>
+        api.post('/administrador/empresas/', payload).then(res => res.data),
+
+    getLocalidades: async () =>
+        api.get('/administrador/empresas/localidades').then(res => res.data),
+
+    // USUARIOS
+    createUsuario: async (payload: any) =>
+        api.post('/usuarios/', payload).then(res => res.data),
+
+    // ASIGNAR EMPRESA
+    asignarEmpresa: async (usuarioId: number, empresaId: number) =>
+        api.put(`/usuarios/${usuarioId}/asigno-empresa`, {
+            id: usuarioId,
+            empresa_id: empresaId,
+        }),
+    getEmpresas: async () =>
+        api.get('/administrador/empresas/')
+            .then(res => res.data.registros),
+
+    getUsuariosSinEmpresa: async () =>
+        api.get('/usuarios/sin-empresa').then(res => res.data),
+
+};
