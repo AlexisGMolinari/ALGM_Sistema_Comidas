@@ -36,7 +36,7 @@ const formatTime = (date: Date): string => {
 
 const CashRegisterPage: React.FC = () => {
   const { user } = useAuth();
-  const isAdmin = user?.roles === 'ROLE_ADMIN';
+  const isAdmin = user?.roles === 'ROLE_ADMIN' || user?.roles === 'ROLE_SUPERADMIN';
     const { showToast } = useToast();
   const [cashRegister, setCashRegister] = useState<CashRegister | null>(null);
   const [loading, setLoading] = useState(true);

@@ -31,7 +31,7 @@ const getCategoryData = (id: number) => {
 
 const ProductsPage: React.FC = () => {
   const { user } = useAuth();
-  const isAdmin = user?.roles === 'ROLE_ADMIN';
+  const isAdmin = user?.roles === 'ROLE_ADMIN' || user?.roles === 'ROLE_SUPERADMIN';
     const { showToast } = useToast();
 
   const [products, setProducts] = useState<Product[]>([]);

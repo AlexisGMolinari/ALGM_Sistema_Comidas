@@ -27,7 +27,7 @@ const QuickAccessCard: React.FC<QuickAccessCardProps> = ({ to, icon, title, bgCo
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
-  const isAdmin = user?.roles === 'ROLE_ADMIN';
+  const isAdmin = user?.roles === 'ROLE_ADMIN' || user?.roles === 'ROLE_SUPERADMIN';
   //const isUser = user?.roles === 'ROLE_USER';
     const { showToast } = useToast();
 

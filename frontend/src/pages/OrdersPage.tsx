@@ -77,7 +77,7 @@ const OrdersPage: React.FC = () => {
 
 
     const { user } = useAuth();
-  const isAdmin = user?.roles === 'ROLE_ADMIN';
+  const isAdmin = user?.roles === 'ROLE_ADMIN' || user?.roles === 'ROLE_SUPERADMIN';
 
   useEffect(() => {
     const loadOrders = async () => {
