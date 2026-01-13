@@ -124,7 +124,8 @@ const AdminPage: React.FC = () => {
                     roles: newUserRole, // STRING
                     activo: newUserActivo,
                     password: editingUser ? (newUserPassword || undefined) : newUserPassword
-                }
+                },
+                accesos: [],
             };
 
             if (editingUser) {
@@ -147,7 +148,7 @@ const AdminPage: React.FC = () => {
                 showToast('Usuario actualizado correctamente', 'success');
             } else {
                 // CREAR
-                const createdUser = await auth.createUsuario(payload.usuario);
+                const createdUser = await auth.createUsuario(payload);
 
                 setUsers([
                     {

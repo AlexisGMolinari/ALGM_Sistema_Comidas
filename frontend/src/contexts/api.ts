@@ -90,8 +90,18 @@ export const auth = {
       return await api.get('/usuarios/').then((res) => res.data);
     },
     // 🚀 NUEVAS RUTAS
-    createUsuario: async (usuario: any) => {
-        return await api.post('/usuarios/', { usuario }).then(res => res.data);
+    createUsuario: async (payload: {
+        usuario: {
+            id: number;
+            nombre: string;
+            email: string;
+            roles: string;
+            activo: number;
+            password?: string;
+        };
+        accesos: any[];
+    }) => {
+        return await api.post('/usuarios/', payload).then(res => res.data);
     },
 
     updateUsuario: async (id: number, usuario: any) => {

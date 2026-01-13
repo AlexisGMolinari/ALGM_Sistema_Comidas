@@ -157,7 +157,20 @@ class UsuarioRepository extends TablasSimplesAbstract
     {
         $usuario = $postUsuario['usuario'];
         $accesos = $postUsuario['accesos'];
+        $creador  = $this->security->getUser();
+
         $usuario['password'] = password_hash( $usuario['password'], PASSWORD_BCRYPT);
+
+        // LÓGICA DE NEGOCIO CLAVE
+        if (
+            in_array('ROLE_ADMIN', $creador->getRoles(), true)
+            && !in_array('ROLE_SUPERADMIN', $creador->getRoles(), true)
+        ) {
+            // ADMIN → hereda empresa
+            $usuario['empresa_id'] = $creador->getEmpresa();
+        }
+        // SUPERADMIN → NO seteamos empresa_id
+
         $this->connection->beginTransaction();
         $usuarioId = $this->createRegistro($usuario);
         $this->agregoAccesos($accesos, $usuarioId);
