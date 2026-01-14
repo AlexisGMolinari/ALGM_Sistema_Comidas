@@ -19,20 +19,40 @@ const formatCurrency = (amount: number): string => {
 };
 
 // Utility function to format date
-const formatDate = (date: Date): string => {
-  return date.toLocaleDateString('es-AR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  });
+const formatDate = (date: string): string => {
+    const [year, month, day] = date.split('-');
+    return `${day}/${month}/${year}`;
 };
 
 // Utility function to format as day name
-const formatDayName = (date: Date): string => {
-  return date.toLocaleDateString('es-ES', {
-    weekday: 'long',
-  });
+const formatDayName = (date: string): string => {
+    const [y, m, d] = date.split('-').map(Number);
+    const localDate = new Date(y, m - 1, d); // 👈 fecha LOCAL
+    return localDate.toLocaleDateString('es-ES', { weekday: 'long' });
 };
+
+const renderVariation = (value: number) => {
+    const isPositive = value > 0;
+    const isNegative = value < 0;
+
+    return (
+        <span
+            className={`flex items-center text-xs font-medium ${
+                isPositive
+                    ? 'text-green-600'
+                    : isNegative
+                        ? 'text-red-600'
+                        : 'text-gray-500'
+            }`}
+        >
+      {isPositive && <ArrowUp size={12} className="mr-0.5" />}
+            {isNegative && <ArrowDown size={12} className="mr-0.5" />}
+            {Math.abs(value).toFixed(1)}%
+    </span>
+    );
+};
+
+
 
 const ReportsPage: React.FC = () => {
     const [activeTab, setActiveTab] = useState<'daily' | 'monthly'>('daily');
@@ -524,61 +544,60 @@ const ReportsPage: React.FC = () => {
                   <div className="space-y-3">
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-gray-600">Ventas:</span>
-                      <div className="flex items-center">
-                        <span className="text-sm font-medium text-gray-900 mr-2">{formatCurrency(monthly?.totalSales ?? 0)}</span>
-                        <span className="flex items-center text-green-600 text-xs font-medium">
-                          <ArrowUp size={12} className="mr-0.5" />
-                          8.5%
-                        </span>
-                      </div>
+                        <div className="flex items-center">
+                          <span className="text-sm font-medium text-gray-900 mr-2">
+                            {formatCurrency(monthly?.totalSales ?? 0)}
+                          </span>
+                            {monthly && renderVariation(monthly.salesChange)}
+                        </div>
                     </div>
                     
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-gray-600">Egresos:</span>
-                      <div className="flex items-center">
-                        <span className="text-sm font-medium text-gray-900 mr-2">{formatCurrency(monthly?.totalExpenses ?? 0)}</span>
-                        <span className="flex items-center text-red-600 text-xs font-medium">
-                          <ArrowUp size={12} className="mr-0.5" />
-                          4.2%
-                        </span>
-                      </div>
-                    </div>
-                    
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">Pedidos:</span>
-                      <div className="flex items-center">
-                        <span className="text-sm font-medium text-gray-900 mr-2">{monthly?.ordersCount ?? 0}</span>
-                        <span className="flex items-center text-green-600 text-xs font-medium">
-                          <ArrowUp size={12} className="mr-0.5" />
-                          10.6%
-                        </span>
-                      </div>
+                        <div className="flex items-center">
+                          <span className="text-sm font-medium text-gray-900 mr-2">
+                            {formatCurrency(monthly?.totalExpenses ?? 0)}
+                          </span>
+                            {monthly && renderVariation(monthly.expensesChange)}
+                        </div>
+
                     </div>
 
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">Valor Promedio:</span>
-                      <div className="flex items-center">
-                        <span className="text-sm font-medium text-gray-900 mr-2">
-                          {formatCurrency(
-                              (monthly?.totalSales ?? 0) / (monthly?.ordersCount ?? 1)
-                          )}
-                        </span>
-                        <span className="flex items-center text-red-600 text-xs font-medium">
-                          <ArrowDown size={12} className="mr-0.5" />
-                          1.8%
-                        </span>
+                      <div className="flex justify-between items-center">
+                          <span className="text-sm text-gray-600">Pedidos:</span>
+                          <div className="flex items-center">
+                            <span className="text-sm font-medium text-gray-900 mr-2">
+                              {monthly?.ordersCount ?? 0}
+                            </span>
+                              {monthly && renderVariation(monthly.ordersChange)}
+                          </div>
                       </div>
-                    </div>
-                    
-                    <div className="pt-2 mt-2 border-t border-gray-200 flex justify-between items-center">
+
+
+                      <div className="flex justify-between items-center">
+                          <span className="text-sm text-gray-600">Valor Promedio:</span>
+                          <div className="flex items-center">
+                            <span className="text-sm font-medium text-gray-900 mr-2">
+                              {formatCurrency(
+                                  monthly && monthly.ordersCount > 0
+                                      ? monthly.totalSales / monthly.ordersCount
+                                      : 0
+                              )}
+                            </span>
+                              {monthly && renderVariation(monthly.averageChange)}
+                          </div>
+                      </div>
+
+
+                      <div className="pt-2 mt-2 border-t border-gray-200 flex justify-between items-center">
                       <span className="text-sm font-semibold text-gray-800">Balance:</span>
-                      <div className="flex items-center">
-                        <span className="text-sm font-bold text-[#FF6B35] mr-2">{formatCurrency(monthly?.balance ?? 0)}</span>
-                        <span className="flex items-center text-green-600 text-xs font-medium">
-                          <ArrowUp size={12} className="mr-0.5" />
-                          9.5%
-                        </span>
-                      </div>
+                        <div className="flex items-center">
+                          <span className="text-sm font-bold text-[#FF6B35] mr-2">
+                            {formatCurrency(monthly?.balance ?? 0)}
+                          </span>
+                            {monthly && renderVariation(monthly.balanceChange)}
+                        </div>
+
                     </div>
                   </div>
                 </div>

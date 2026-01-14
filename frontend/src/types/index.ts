@@ -97,7 +97,7 @@ export interface DailyReportItem {
 }
 
 export interface DailyReport {
-  date: Date;
+  date: string;
   totalSales: number;
   totalExpenses: number;
   ordersCount: number;
@@ -110,14 +110,25 @@ export interface CategoryReport {
 }
 
 export interface MonthlyReport {
-  month: string;
-  totalSales: number;
-  totalExpenses: number;
-  balance: number;
-  ordersCount: number;
-  salesByCategory: CategoryReport[];
-  expensesByCategory: CategoryReport[];
+    month: string;
+    previousMonth?: string;
+
+    totalSales: number;
+    totalExpenses: number;
+    balance: number;
+    ordersCount: number;
+
+    // 🔥 VARIACIONES REALES (backend)
+    salesChange: number;
+    expensesChange: number;
+    balanceChange: number;
+    ordersChange: number;
+    averageChange: number;
+
+    salesByCategory: CategoryReport[];
+    expensesByCategory: CategoryReport[];
 }
+
 
 export interface Comprobantes {
   id: number;

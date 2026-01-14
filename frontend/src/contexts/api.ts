@@ -499,7 +499,7 @@ export const fetchDailyReport = async (): Promise<DailyReport[] | null> => {
         const response = await api.get<DailyReportItem[]>('/admin/reportes/semanal');
 
         return response.data.map((item) => ({
-            date: new Date(item.date),
+            date: item.date,
             totalSales: Number(item.totalSales),
             totalExpenses: Number(item.totalExpenses),
             ordersCount: Number(item.ordersCount),

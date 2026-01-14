@@ -453,22 +453,34 @@ class AdminPedidoRepository extends TablasSimplesAbstract
     {
         $empresaId = $this->security->getUser()->getEmpresa();
 
-        $sql = "
-        SELECT
-            DATE(p.fecha_creado) AS date,
-            SUM(p.total) AS totalSales,
-            COUNT(p.id) AS ordersCount,
-            COALESCE(SUM(e.monto), 0) AS totalExpenses
-        FROM pedidos p
-        LEFT JOIN egresos e
-            ON DATE(e.fecha) = DATE(p.fecha_creado)
-           AND e.empresa_id = :empresa_id
-        WHERE p.fecha_creado >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
-          AND p.estado_id != 3
-          AND p.empresa_id = :empresa_id
-        GROUP BY DATE(p.fecha_creado)
-        ORDER BY DATE(p.fecha_creado) DESC
-    ";
+        $sql = "SELECT
+                d.fecha AS date,
+                COALESCE(SUM(p.total), 0) AS totalSales,
+                COUNT(p.id) AS ordersCount,
+                COALESCE(SUM(e.monto), 0) AS totalExpenses
+            FROM (
+                SELECT DATE(fecha_creado) AS fecha
+                FROM pedidos
+                WHERE fecha_creado >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+                  AND empresa_id = :empresa_id
+            
+                UNION
+            
+                SELECT DATE(fecha)
+                FROM egresos
+                WHERE fecha >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+                  AND empresa_id = :empresa_id
+            ) d
+            LEFT JOIN pedidos p
+                ON DATE(p.fecha_creado) = d.fecha
+               AND p.estado_id != 3
+               AND p.empresa_id = :empresa_id
+            LEFT JOIN egresos e
+                ON DATE(e.fecha) = d.fecha
+               AND e.empresa_id = :empresa_id
+            GROUP BY d.fecha
+            ORDER BY d.fecha DESC
+            ";
         return $this->connection->fetchAllAssociative($sql, [
             'empresa_id' => $empresaId
         ]);
@@ -552,17 +564,32 @@ class AdminPedidoRepository extends TablasSimplesAbstract
             ($ventasPrevias['totalSales'] ?? 0) - $egresosPrevios,
             $balance
         );
+        $promedioActual = $pedidosTotales > 0 ? $ventasTotales / $pedidosTotales : 0;
+
+        $promedioAnterior = ($ventasPrevias['ordersCount'] ?? 0) > 0
+            ? ($ventasPrevias['totalSales'] ?? 0) / $ventasPrevias['ordersCount'] : 0;
+
+        $variacionPedidos = $this->calcVariation($ventasPrevias['ordersCount'] ?? 0,
+            $pedidosTotales
+        );
+
+        $variacionPromedio = $this->calcVariation($promedioAnterior, $promedioActual);
 
         return [
             'month' => $mesActual,
             'previousMonth' => $mesAnterior,
+
             'totalSales' => $ventasTotales,
             'totalExpenses' => $egresosActual,
             'balance' => $balance,
             'ordersCount' => $pedidosTotales,
+
             'salesChange' => $variacionVentas,
             'expensesChange' => $variacionEgresos,
             'balanceChange' => $variacionBalance,
+            'ordersChange' => $variacionPedidos,
+            'averageChange' => $variacionPromedio,
+
             'salesByCategory' => [
                 ['name' => 'General', 'value' => $ventasTotales]
             ],
