@@ -9,6 +9,7 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class EgresoRepository extends TablasSimplesAbstract
 {
@@ -70,6 +71,9 @@ class EgresoRepository extends TablasSimplesAbstract
     public function createEgreso(array $postValues, int $empresa_id): void
     {
         $caja = (new AdminCajaRepository($this->connection, $this->security))->getCajaActual($empresa_id);
+        if (!$caja) {
+            throw new HttpException(400, "Se necesita abrir una caja para poder realizar un egreso.");
+        }
         $postValues['caja_id'] = (int)$caja['id'];
         $postValues['empresa_id'] = $empresa_id;
 

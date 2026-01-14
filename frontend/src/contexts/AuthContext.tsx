@@ -1,6 +1,7 @@
 import React, { createContext, useState, useEffect } from 'react';
 import { auth } from './api.ts';
 import {useToast} from "../components/common/SimpleToast.tsx";
+import { getApiErrorMessage } from "../utils/apiErrors";
 
 
 // Define user types
@@ -68,7 +69,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return true;
     } catch (err) {
       console.error('Login error', err);
-      showToast('Login Error', 'error' );
+        showToast(getApiErrorMessage(err, "Error al iniciar sesión. Intente nuevamente."), "error");
       return false;
     }
   };

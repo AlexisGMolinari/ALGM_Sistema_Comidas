@@ -32,34 +32,24 @@ api.interceptors.request.use((config) => {
 
 api.interceptors.response.use(
     (response) => {
-        // Si la respuesta contiene status 'error' en el cuerpo
+        // Backend devuelve status:error pero HTTP 200
         if (response.data?.status === 'error') {
-            const msg = response.data?.message || 'Ocurrió un error inesperado.';
-            return Promise.reject(new Error(msg));
+            return Promise.reject({
+                response: {
+                    data: response.data,
+                    status: 400,
+                },
+            });
         }
+
         return response;
     },
     (error) => {
-        // Si el backend devolvió un error HTTP (ej. 400, 500)
-        if (error.response?.data) {
-            const msg =
-                error.response.data.message ||
-                error.response.data.error ||
-                'Error en la comunicación con el servidor.';
-            return Promise.reject(new Error(msg));
-        }
-
-        // Si fue un error de red o timeout
-        if (error.request) {
-            return Promise.reject(
-                new Error('No se pudo conectar con el servidor.')
-            );
-        }
-
-        // Cualquier otro error desconocido
-        return Promise.reject(new Error(error.message || 'Error desconocido.'));
+        // 🔥 MUY IMPORTANTE: no envolver en new Error
+        return Promise.reject(error);
     }
 );
+
 
 export { API_URL, BASE_URL, api, publicApi };
 

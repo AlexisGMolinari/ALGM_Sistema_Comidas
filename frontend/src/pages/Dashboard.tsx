@@ -5,6 +5,7 @@ import useAuth from '../hooks/useAuth';
 import { getDashboardResumen } from "../contexts/api.ts";
 import { DashboardResumen } from "../types";
 import {useToast} from "../components/common/SimpleToast.tsx";
+import {getApiErrorMessage} from "../utils/apiErrors.ts";
 
 
 interface QuickAccessCardProps {
@@ -60,7 +61,7 @@ const Dashboard: React.FC = () => {
         setDashboardData(data);
       } catch (error) {
         console.error('Error al cargar resumen del dashboard', error);
-        showToast('Error al cargar resumen del dashboard', 'error' );
+          showToast(getApiErrorMessage(error,'Error al cargar resumen del dashboard'), 'error' );
       } finally {
         setLoading(false);
       }

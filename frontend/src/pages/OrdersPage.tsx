@@ -10,6 +10,7 @@ import { Order, Product } from '../types';
 import { Edit } from 'lucide-react';
 import useAuth from "../hooks/useAuth.ts";
 import { useToast } from '../components/common/SimpleToast';
+import { getApiErrorMessage } from "../utils/apiErrors";
 
 
 
@@ -159,7 +160,7 @@ const OrdersPage: React.FC = () => {
         setComprobanteImagePreview('');
     } catch (error) {
       console.error('Error al subir comprobante:', error);
-        showToast( 'Hubo un error al subir el comprobante. Intente nuevamente.', 'error');
+        showToast(getApiErrorMessage(error,'Hubo un error al subir el comprobante. Intente nuevamente.'), 'error');
     }
   };
 
@@ -363,8 +364,8 @@ const OrdersPage: React.FC = () => {
                 return;
             } catch (error) {
                 console.error("Error al completar el pedido:", error);
-                showToast(
-                    "Hubo un error al completar el pedido",
+                showToast(getApiErrorMessage(error,
+                    "Hubo un error al completar el pedido"),
                     "error"
                 );
                 return;
@@ -495,8 +496,8 @@ const OrdersPage: React.FC = () => {
             showToast("Pedido dividido exitosamente", "success");
         } catch (error) {
             console.error("Error al dividir el pedido:", error);
-            showToast(
-                "Hubo un error al dividir el pedido",
+            showToast(getApiErrorMessage(error,
+                "Hubo un error al dividir el pedido"),
                 "error"
             );
         }
@@ -513,7 +514,7 @@ const OrdersPage: React.FC = () => {
       setOrders(updatedOrders);
     } catch (error) {
       console.error('Error al anular el pedido:', error);
-        showToast('Hubo un error al anular el pedido.', 'error');
+        showToast(getApiErrorMessage(error,'Hubo un error al anular el pedido.'), 'error');
     }
   };
 
@@ -549,7 +550,7 @@ const OrdersPage: React.FC = () => {
                 )
             );
         } else {
-            showToast('No hay suficiente stock disponible.', 'warning');
+            showToast(getApiErrorMessage(error,'No hay suficiente stock disponible.'), 'warning');
         }
     };
 
@@ -640,7 +641,7 @@ const OrdersPage: React.FC = () => {
             setEditingOrder(null);
         } catch (error) {
             console.error('Error al crear pedido:', error);
-            showToast('Hubo un problema al crear el pedido.', 'error');
+            showToast(getApiErrorMessage(error,'Hubo un problema al crear el pedido.'), 'error');
         }
     };
 
@@ -757,7 +758,7 @@ const OrdersPage: React.FC = () => {
             setOrders(updatedOrders);
         } catch (error) {
             console.error("Error al crear pedido sin pago:", error);
-            showToast( "Error al crear pedido.", "error");
+            showToast(getApiErrorMessage(error,"Error al crear pedido."), "error");
         }
     };
 

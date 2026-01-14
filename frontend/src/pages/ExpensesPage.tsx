@@ -6,6 +6,10 @@ import {
 import EmptyState from '../components/common/EmptyState';
 import { fetchExpenses, addExpense, updateExpense, deleteExpense, fetchExpenseCategories } from '../contexts/api';
 import { Expense, Category } from '../types';
+import { useToast } from '../components/common/SimpleToast';
+import { getApiErrorMessage } from "../utils/apiErrors";
+
+
 
 
 // Utility function to format currency
@@ -29,7 +33,8 @@ const ExpensesPage: React.FC = () => {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [showExpenseModal, setShowExpenseModal] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
-  
+    const { showToast } = useToast();
+
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState<number>(0);
   const [expenseCategories, setExpenseCategories] = useState<Category[]>([]);
@@ -76,19 +81,27 @@ const ExpensesPage: React.FC = () => {
       descripcion: description,
     };
 
-    if (editingExpense) {
-      await updateExpense(editingExpense.id, payload);
-      setExpenses(expenses.map(e =>
-          e.id === editingExpense.id ? { ...e, ...payload, date: new Date(date) } : e
-      ));
-    } else {
-      await addExpense(payload);
-      const updated = await fetchExpenses();
-      setExpenses(updated);
-    }
+      try {
+          if (editingExpense) {
+              await updateExpense(editingExpense.id, payload);
+              setExpenses(expenses.map(e =>
+                  e.id === editingExpense.id
+                      ? { ...e, ...payload, date: new Date(date) }
+                      : e
+              ));
+          } else {
+              await addExpense(payload);
+              const updated = await fetchExpenses();
+              setExpenses(updated);
+          }
 
-    resetForm();
-    setShowExpenseModal(false);
+          resetForm();
+          setShowExpenseModal(false);
+
+      } catch (error) {
+          console.error("Error al registrar egreso:", error);
+          showToast(getApiErrorMessage(error, "No se pudo registrar el egreso."), "error");
+      }
   };
   
   // Function to delete an expense

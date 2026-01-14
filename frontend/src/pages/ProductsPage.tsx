@@ -6,6 +6,7 @@ import { Product } from '../types';
 import useAuth from '../hooks/useAuth';
 import { products as productsApi, combos } from "../contexts/api.ts";
 import {useToast} from "../components/common/SimpleToast.tsx";
+import {getApiErrorMessage} from "../utils/apiErrors.ts";
 
 
 // Utility function to format currency
@@ -68,7 +69,7 @@ const ProductsPage: React.FC = () => {
         setProducts(data);
       } catch (error) {
         console.error('Error al cargar productos:', error);
-        showToast('Error al cargar productos', 'error');
+          showToast(getApiErrorMessage(error,'Error al cargar productos'), 'error');
       }
     };
 
@@ -137,7 +138,7 @@ const ProductsPage: React.FC = () => {
       setShowProductModal(false);
     } catch (error) {
       console.error('Error al guardar producto:', error);
-      showToast('Ocurrió un error al guardar el producto', 'error');
+        showToast(getApiErrorMessage(error,'Ocurrió un error al guardar el producto'), 'error');
     }
   };
 

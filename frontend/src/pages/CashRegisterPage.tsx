@@ -7,6 +7,7 @@ import useAuth from '../hooks/useAuth';
 import { CashRegister } from '../types';
 import { getCajaActual, createCaja, cierreCaja } from '../contexts/api';
 import { useToast } from '../components/common/SimpleToast';
+import {getApiErrorMessage} from "../utils/apiErrors.ts";
 
 
 // Utility function to format currency
@@ -86,7 +87,7 @@ const CashRegisterPage: React.FC = () => {
       setShowOpenModal(false); // cierra modal
     } catch (error) {
       console.error('Error al abrir la caja', error);
-      showToast('Error al abrir la caja', 'error' )
+        showToast(getApiErrorMessage(error,'Error al abrir la caja'), 'error' )
     }
   };
   
@@ -112,7 +113,7 @@ const CashRegisterPage: React.FC = () => {
       showToast('Caja cerrada correctamente', 'success' )
     } catch (error) {
       console.error('Error al cerrar la caja', error);
-      showToast('Error al cerrar la caja', 'error' )
+        showToast(getApiErrorMessage(error,'Error al cerrar la caja'), 'error' )
     }
   };
   

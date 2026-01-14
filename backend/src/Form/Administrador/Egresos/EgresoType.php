@@ -17,9 +17,9 @@ class EgresoType extends AbstractTypes
     private function constraints(int $id): Assert\Collection
     {
         return new Assert\Collection([
-            'id'             => new Assert\EqualTo($id),
+            'id'             => [new Assert\Optional([new Assert\EqualTo($id)])],
             'monto'          => [new Assert\NotBlank(), new Assert\Range(['min' => 0.0])],
-            'categoria_id'   => new Assert\Range(['min' => 1]),
+            'categoria_id'   => [new Assert\NotBlank(), new Assert\Range(['min' => 1])],
             'descripcion'    => [new Assert\Optional()],
         ]);
     }

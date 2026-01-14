@@ -3,6 +3,7 @@ import { Building2, Users, Pencil, Trash2, ArrowLeft } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { superAdmin } from '../contexts/api';
 import { useToast } from '../components/common/SimpleToast';
+import {getApiErrorMessage} from "../utils/apiErrors.ts";
 
 interface Empresa {
     id: number;
@@ -26,8 +27,8 @@ export default function SuperAdminEmpresas() {
         try {
             const data = await superAdmin.getEmpresas();
             setEmpresas(data);
-        } catch (e) {
-            showToast('Error al cargar empresas', 'error');
+        } catch (error) {
+            showToast(getApiErrorMessage(error,'Error al cargar empresas'), 'error');
         } finally {
             setLoading(false);
         }
@@ -61,8 +62,8 @@ export default function SuperAdminEmpresas() {
             });
 
             setShowEditModal(true);
-        } catch (e) {
-            showToast('No se pudo cargar la empresa', 'error');
+        } catch (error) {
+            showToast(getApiErrorMessage(error,'No se pudo cargar la empresa'), 'error');
         }
     };
 
@@ -74,8 +75,8 @@ export default function SuperAdminEmpresas() {
             showToast('Empresa actualizada', 'success');
             setShowEditModal(false);
             cargarEmpresas();
-        } catch (e) {
-            showToast('Error al actualizar empresa', 'error');
+        } catch (error) {
+            showToast(getApiErrorMessage(error,'Error al actualizar empresa'), 'error');
         }
     };
 
@@ -93,7 +94,7 @@ export default function SuperAdminEmpresas() {
             if (error.response?.status === 400) {
                 showToast(error.response.data.message, 'warning');
             } else {
-                showToast('Error inesperado al eliminar la empresa', 'error');
+                showToast(getApiErrorMessage(error,'Error inesperado al eliminar la empresa'), 'error');
             }
         }
     };

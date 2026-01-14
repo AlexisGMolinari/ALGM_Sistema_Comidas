@@ -457,14 +457,12 @@ class AdminPedidoRepository extends TablasSimplesAbstract
         SELECT
             DATE(p.fecha_creado) AS date,
             SUM(p.total) AS totalSales,
-            (
-                SELECT IFNULL(SUM(e.monto), 0)
-                FROM egresos e
-                WHERE DATE(e.fecha) = DATE(p.fecha_creado)
-                  AND e.empresa_id = :empresa_id
-            ) AS totalExpenses,
-            COUNT(p.id) AS ordersCount
+            COUNT(p.id) AS ordersCount,
+            COALESCE(SUM(e.monto), 0) AS totalExpenses
         FROM pedidos p
+        LEFT JOIN egresos e
+            ON DATE(e.fecha) = DATE(p.fecha_creado)
+           AND e.empresa_id = :empresa_id
         WHERE p.fecha_creado >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
           AND p.estado_id != 3
           AND p.empresa_id = :empresa_id

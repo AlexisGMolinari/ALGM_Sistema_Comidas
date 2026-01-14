@@ -75,48 +75,55 @@ export default function SuperAdminEmpresaUsuarios() {
             </div>
 
             {/* TABLA */}
-            <div className="bg-white rounded-xl shadow-md overflow-hidden">
-                <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-600">
-                    <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium  uppercase">ID</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium uppercase">Nombre</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium uppercase">Email</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium uppercase">Rol</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium uppercase">Activo</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium uppercase">Acciones</th>
-                    </tr>
-                    </thead>
+            <div className="bg-white rounded-xl shadow-md">
+                {/* 👇 ESTE CONTENEDOR HABILITA SCROLL HORIZONTAL */}
+                <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200 whitespace-nowrap">
+                        <thead className="bg-gray-600">
+                        <tr>
+                            <th className="px-6 py-3 text-left text-xs font-medium uppercase">ID</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium uppercase">Nombre</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium uppercase">Email</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium uppercase">Rol</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium uppercase">Activo</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium uppercase">Acciones</th>
+                        </tr>
+                        </thead>
 
-                    <tbody className="divide-y divide-gray-200">
-                    {usuarios.map(u => (
-                        <tr key={u.id}>
-                            <td className="px-6 py-4 text-gray-800">{u.id}</td>
-                            <td className="px-6 py-4 text-gray-800">{u.nombre}</td>
-                            <td className="px-6 py-4 text-gray-800">{u.email}</td>
-                            <td className="px-6 py-4 text-gray-800">{u.roles}</td>
-                            <td className="px-6 py-4 text-gray-800">
-                                <span className={`px-2 py-1 rounded-full text-xs ${
+                        <tbody className="divide-y divide-gray-200">
+                        {usuarios.map(u => (
+                            <tr key={u.id}>
+                                <td className="px-6 py-4 text-gray-800">{u.id}</td>
+                                <td className="px-6 py-4 text-gray-800">{u.nombre}</td>
+                                <td className="px-6 py-4 text-gray-800">{u.email}</td>
+                                <td className="px-6 py-4 text-gray-800">{u.roles}</td>
+                                <td className="px-6 py-4 text-gray-800">
+                            <span
+                                className={`px-2 py-1 rounded-full text-xs ${
                                     u.activo === 1
                                         ? 'bg-green-100 text-green-800'
                                         : 'bg-red-100 text-red-800'
-                                }`}>
-                                    {u.activo === 1 ? 'Activo' : 'Bloqueado'}
-                                </span>
-                            </td>
-                            <td className="px-6 py-4">
-                                <button
-                                    onClick={() => setEditUsuario(u)}
-                                    className="px-3 py-1 bg-blue-600 text-white rounded-lg flex items-center"
-                                >
-                                    <Pencil size={14} className="mr-1" /> Editar
-                                </button>
-                            </td>
-                        </tr>
-                    ))}
-                    </tbody>
-                </table>
+                                }`}
+                            >
+                                {u.activo === 1 ? 'Activo' : 'Bloqueado'}
+                            </span>
+                                </td>
+                                <td className="px-6 py-4">
+                                    <button
+                                        onClick={() => setEditUsuario(u)}
+                                        className="px-3 py-1 bg-blue-600 text-white rounded-lg flex items-center whitespace-nowrap"
+                                    >
+                                        <Pencil size={14} className="mr-1" />
+                                        Editar
+                                    </button>
+                                </td>
+                            </tr>
+                        ))}
+                        </tbody>
+                    </table>
+                </div>
             </div>
+
 
             {/* MODAL EDICIÓN */}
             {editUsuario && (
