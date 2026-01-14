@@ -72,7 +72,10 @@ class AdminPedidoType extends AbstractTypes
                     'mimeTypes' => ['image/jpeg', 'image/png', 'image/webp'],
                     'mimeTypesMessage' => 'El archivo debe ser una imagen válida (jpg, png, webp).'
                 ])
-            ]
+            ],
+            'metodo_pago_id' => [new Assert\Optional()],
+            'total_efectivo' => [new Assert\Optional()],
+            'total_transferencia' => [new Assert\Optional()],
         ]);
     }
     // -----------------------------------------------------------------------------------------------------------------

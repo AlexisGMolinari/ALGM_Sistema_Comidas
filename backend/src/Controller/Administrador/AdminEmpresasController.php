@@ -35,6 +35,18 @@ class AdminEmpresasController extends AbstractController
     }
 
     /**
+     * @param AdminEmpresaRepository $repository
+     * @return JsonResponse
+     * @throws Exception
+     */
+    #[Route("/sin-usuarios", name: "get_empresas_sin_usuario", methods: ["GET"])]
+    public function getEmpresasSinUsuario(AdminEmpresaRepository $repository): JsonResponse
+    {
+        $empresas = $repository->getEmpresasSinUsuario();
+        return $this->json($empresas);
+    }
+
+    /**
      * @param int $id
      * @param AdminEmpresaRepository $empresaRepository
      * @param UsuarioRepository $usuarioRepository
@@ -110,6 +122,26 @@ class AdminEmpresasController extends AbstractController
         return $this->json([]);
     }
 
+    /**
+     * @param int $id
+     * @param AdminEmpresaRepository $repository
+     * @param GetRequestValidator $requestValidator
+     * @param EmpresaType $type
+     * @return JsonResponse
+     * @throws Exception
+     */
+    #[Route('/editar/{id}', name: 'edito_empresa', requirements: ['id' => '\d+'], methods: ["PUT"])]
+    public function editoEmpresa(int $id,
+                                 AdminEmpresaRepository $repository,
+                                GetRequestValidator $requestValidator,
+                                EmpresaType $type): JsonResponse
+    {
+        $postValues = $requestValidator->getRestBody();
+        $type->controloRegistro($postValues, $id);
+        $repository->updateRegistro($postValues, $id);
+        return $this->json([]);
+    }
+
     // --------------------------- LOCALIDADES
 
     /**
@@ -169,5 +201,21 @@ class AdminEmpresasController extends AbstractController
         $empresaRepository->updateEmpresa($putValues, $id);
         return $this->json([]);
     }
+
+    /**
+     * @param int $id
+     * @param AdminEmpresaRepository $empresaRepository
+     * @return JsonResponse
+     * @throws Exception
+     */
+    #[Route('/{id}', name: 'delete', requirements: ['id' => '\d+'], methods: ["DELETE"])]
+    public function deleteEmpresa(int $id,
+                                  AdminEmpresaRepository $empresaRepository): JsonResponse
+    {
+        $empresaRepository->checkIdExiste($id);
+        $empresaRepository->eliminarEmpresa($id);
+        return $this->json([]);
+    }
+
 
 }

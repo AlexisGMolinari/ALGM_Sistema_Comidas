@@ -87,7 +87,7 @@ class ComprobantesRepository extends TablasSimplesAbstract
             FROM {$this->table} p
             INNER JOIN estado_pedido ep ON p.estado_id = ep.id
             WHERE p.fecha_creado BETWEEN :desde AND :hasta
-              AND p.metodo_pago_id = 2
+              AND p.metodo_pago_id IN (2, 3)
               AND p.estado_id <> 3
               AND p.empresa_id = :empresa
             ORDER BY p.fecha_creado DESC";

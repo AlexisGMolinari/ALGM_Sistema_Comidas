@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { Plus, Building2, Users, Link2 } from 'lucide-react';
 import { superAdmin } from "../contexts/api.ts";
 import {useToast} from "../components/common/SimpleToast.tsx";
+import { Link } from 'react-router-dom';
+
 
 
 export default function SuperAdmin() {
@@ -32,6 +34,7 @@ export default function SuperAdmin() {
     const [empresa, setEmpresa] = useState({
         nombre: '',
         direccion: '',
+        cuit: '',
         url_sitioweb: '',
         nombre_usuario: '',
         telefono: '',
@@ -54,11 +57,7 @@ export default function SuperAdmin() {
 
     // Empresas
     useEffect(() => {
-        superAdmin.getEmpresas().then((data) => {
-            // Asumimos que backend devuelve usuario_id o null
-            const sinUsuario = data.filter((e: any) => !e.usuario_id);
-            setEmpresas(sinUsuario);
-        });
+        cargarEmpresas();
     }, []);
 
     // Localidades
@@ -72,15 +71,19 @@ export default function SuperAdmin() {
             id: 0,
             nombre: empresa.nombre,
             direccion: empresa.direccion,
+            cuit: empresa.cuit,
             telefono: Number(empresa.telefono),
             url_sitioweb: empresa.url_sitioweb,
-            nombre_usuario: empresa.nombre_usuario,
+           // nombre_usuario: empresa.nombre_usuario,
             activa: 1,
             localidad_id: Number(empresa.localidad_id),
         });
 
         setEmpresaId(resp.id);
         setShowEmpresaModal(false);
+        await Promise.all([
+            cargarEmpresas()
+        ]);
         showToast('Empresa creada', 'success' );
     };
 
@@ -102,6 +105,10 @@ export default function SuperAdmin() {
 
         setUsuarioId(resp.usuario?.id ?? resp.id);
         setShowUsuarioModal(false);
+        await Promise.all([
+            cargarEmpresas(),
+            cargarUsuariosSinEmpresa()
+        ]);
         showToast('Usuario creado', 'success');
     };
 
@@ -131,14 +138,23 @@ export default function SuperAdmin() {
         <div className="space-y-6">
 
             {/* HEADER */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-white">Super Administrador</h1>
                     <p className="mt-2 text-orange-400">
                         Alta de empresas y usuarios
                     </p>
                 </div>
+
+                <Link
+                    to="/superadmin/empresas"
+                    className="inline-flex items-center px-4 py-2 bg-white text-gray-800 rounded-lg shadow hover:bg-gray-100 transition"
+                >
+                    <Building2 size={18} className="mr-2" />
+                    Ver listado de empresas
+                </Link>
             </div>
+
 
             {/* CARDS */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -324,6 +340,8 @@ export default function SuperAdmin() {
                     <Input label="Nombre" onChange={v => setEmpresa({ ...empresa, nombre: v })} />
                     <Input label="Dirección" onChange={v => setEmpresa({ ...empresa, direccion: v })} />
                     <Input label="Teléfono" onChange={v => setEmpresa({ ...empresa, telefono: v })} />
+                    <Input label="Sitio Web Link" onChange={v => setEmpresa({ ...empresa, url_sitioweb: v })} />
+
                     <Select
                         label="Localidad"
                         options={localidades}

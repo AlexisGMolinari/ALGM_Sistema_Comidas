@@ -167,6 +167,7 @@ class ProductoController extends AbstractController
     {
         $valores = $requestValidator->getRestBody();
         $productoType->controloCombo($valores);
+        $empresa_id = $this->getUser()->getEmpresa();
 
         if (!isset($valores['componentes']) || !is_array($valores['componentes'])) {
             throw new \InvalidArgumentException("Se requieren los productos componentes del combo.");
@@ -175,7 +176,7 @@ class ProductoController extends AbstractController
         unset($valores['componentes']);
 
         $comboId = $productoRepository->createRegistro($valores);
-        $productoRepository->vincularComponentesCombo($comboId, $componentes);
+        $productoRepository->vincularComponentesCombo($comboId, $componentes, $empresa_id);
         return $this->json(['id' => $comboId], 201);
     }
 

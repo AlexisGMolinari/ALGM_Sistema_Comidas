@@ -418,11 +418,17 @@ export const completeOrder = async (orderId: string): Promise<void> => {
 
 export const uploadComprobanteImage = async (
     pedidoId: number,
-    comprobanteFile: File
+    comprobanteFile: File,
+    metodoPagoId: number,
+    totalEfectivo: number,
+    totalTransferencia: number
 ): Promise<void> => {
     const formData = new FormData();
     formData.append('id', String(pedidoId));
     formData.append('comprobante_img', comprobanteFile);
+    formData.append('metodo_pago_id', String(metodoPagoId));
+    formData.append('total_efectivo', String(totalEfectivo));
+    formData.append('total_transferencia', String(totalTransferencia));
 
     await api.post(`/admin/pedidos/comprobante/${pedidoId}`, formData, {
         withCredentials: true,
@@ -556,6 +562,28 @@ export const superAdmin = {
     createEmpresa: async (payload: any) =>
         api.post('/administrador/empresas/', payload).then(res => res.data),
 
+    updateEmpresa: async (id: number, empresa: any) =>
+        api.put(`/administrador/empresas/editar/${id}`, empresa)
+            .then(res => res.data),
+
+    getEmpresasSinUsuario: async () =>
+        api.get('/administrador/empresas/sin-usuarios').then(res => res.data),
+
+    getEmpresas: async () =>
+        api.get('/administrador/empresas/')
+            .then(res => res.data.registros),
+
+    getEmpresaById: async (id: number) =>
+        api.get(`/administrador/empresas/${id}`)
+            .then(res => res.data),
+
+    deleteEmpresa: async (id: number) =>
+        api.delete(`/administrador/empresas/${id}`).then(res => res.data),
+
+    getEmpresaUsuarios: async (empresaId: number) =>
+        api.get(`/administrador/empresas/${empresaId}/usuarios`)
+            .then(res => res.data.registros),
+
     getLocalidades: async () =>
         api.get('/administrador/empresas/localidades').then(res => res.data),
 
@@ -563,17 +591,13 @@ export const superAdmin = {
     createUsuario: async (payload: any) =>
         api.post('/usuarios/', payload).then(res => res.data),
 
+    getUsuariosSinEmpresa: async () =>
+        api.get('/usuarios/sin-empresa').then(res => res.data),
+
     // ASIGNAR EMPRESA
     asignarEmpresa: async (usuarioId: number, empresaId: number) =>
         api.put(`/usuarios/${usuarioId}/asigno-empresa`, {
             id: usuarioId,
             empresa_id: empresaId,
         }),
-    getEmpresas: async () =>
-        api.get('/administrador/empresas/')
-            .then(res => res.data.registros),
-
-    getUsuariosSinEmpresa: async () =>
-        api.get('/usuarios/sin-empresa').then(res => res.data),
-
 };

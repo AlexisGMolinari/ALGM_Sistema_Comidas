@@ -173,6 +173,9 @@ class AdminPedidoController extends AbstractController
         }
         $postValues = [
             'id' => $id,
+            'metodo_pago_id' => $request->request->getInt('metodo_pago_id'),
+            'total_efectivo' => $request->request->get('total_efectivo'),
+            'total_transferencia' => $request->request->get('total_transferencia'),
             'comprobante_img' => $file
         ];
 

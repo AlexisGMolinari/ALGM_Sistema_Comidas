@@ -53,10 +53,21 @@ class ProductoRepository extends TablasSimplesAbstract
      */
     public function getProdById(int $id, int $empresa_id): array
     {
-        $sql = "SELECT prod.*, cat.nombre AS nombreCategoria FROM " . $this->nombreTabla . " prod
-                INNER JOIN categoria_producto cat ON prod.categoria_prod_id = cat.id
-                WHERE prod.id = ? AND empresa_id = " . $empresa_id;
-        return $this->connection->fetchAssociative($sql, [$id]);
+        $sql = "SELECT prod.*, cat.nombre AS nombreCategoria
+            FROM {$this->nombreTabla} prod
+            INNER JOIN categoria_producto cat ON prod.categoria_prod_id = cat.id
+            WHERE prod.id = ? AND prod.empresa_id = ?";
+
+        $producto = $this->connection->fetchAssociative($sql, [$id, $empresa_id]);
+
+        if (!$producto) {
+            throw new HttpException(
+                400,
+                "Producto ID $id no existe o no pertenece a la empresa"
+            );
+        }
+
+        return $producto;
     }
 
     /**
@@ -132,7 +143,8 @@ class ProductoRepository extends TablasSimplesAbstract
         $arrMov = [
             'producto_id' => $postValues['id'],
             'tipo_movimiento_id' => $postValues['tipo_movimiento'],
-            'cantidad' => $postValues['cantidad']
+            'cantidad' => $postValues['cantidad'],
+            'empresa_id' => $empresa_id,
         ];
         (new MovimientoStockRepository($this->connection, $this->security))
             ->insertaMovimiento($arrMov);
@@ -156,7 +168,6 @@ class ProductoRepository extends TablasSimplesAbstract
         $componentes = $this->connection->fetchAllAssociative($sql, [$comboId]);
 
         $movimientoRepo = new MovimientoStockRepository($this->connection, $this->security);
-        $this->connection->beginTransaction();
         // Validación previa antes de descontar
         foreach ($componentes as $comp) {
             $productoId = (int)$comp['producto_id'];
@@ -177,10 +188,10 @@ class ProductoRepository extends TablasSimplesAbstract
                 'producto_id' => $productoId,
                 'tipo_movimiento_id' => $tipoMov,
                 'cantidad' => $cantidadDescontar,
-                'pedido_id' => $pedidoId
+                'pedido_id' => $pedidoId,
+                'empresa_id' => $empresa_id
             ]);
         }
-        $this->connection->commit();
     }
 
     /**
@@ -203,10 +214,11 @@ class ProductoRepository extends TablasSimplesAbstract
      *
      * @param int $comboId
      * @param array $componentes
+     * @param int $empresa_id
      * @return void
      * @throws Exception
      */
-    public function vincularComponentesCombo(int $comboId, array $componentes): void
+    public function vincularComponentesCombo(int $comboId, array $componentes, int $empresa_id): void
     {
         foreach ($componentes as $item) {
             if (!isset($item['producto_id'], $item['cantidad'])) {
@@ -214,6 +226,7 @@ class ProductoRepository extends TablasSimplesAbstract
             }
 
             $this->connection->insert('combo_producto', [
+                'empresa_id' => $empresa_id,
                 'combo_id' => $comboId,
                 'producto_id' => $item['producto_id'],
                 'cantidad' => $item['cantidad']

@@ -26,36 +26,57 @@ class AdminCajaRepository extends TablasSimplesAbstract
      */
     public function obtenerDatosDeCaja(array $caja, int $empresa_id): array
     {
-        // Fechas de filtro: desde apertura hasta cierre o ahora si está abierta
         $fechaDesde = $caja['abierta_fecha'];
         $fechaHasta = $caja['cerrada_fecha'] ?? date('Y-m-d H:i:s');
 
-        $sql = "SELECT 
-            COUNT(p.id) AS total_pedidos,
-            COALESCE(SUM(p.total), 0) AS total_ventas,
-            COALESCE(SUM(CASE WHEN mp.nombre = 'efectivo' THEN p.total ELSE 0 END), 0) AS ventas_efectivo,
-            COALESCE(SUM(CASE WHEN mp.nombre = 'transferencia' THEN p.total ELSE 0 END), 0) AS ventas_transferencia
-        FROM pedidos p
-        INNER JOIN metodo_pago mp ON mp.id = p.metodo_pago_id
-        WHERE p.estado_id = 2
-          AND p.empresa_id = :empresa_id
-          AND p.fecha_creado BETWEEN :fechaDesde AND :fechaHasta
-          AND p.caja_id = :caja_id ";
+        $sql = "
+    SELECT 
+        COUNT(p.id) AS total_pedidos,
 
-        $result = $this->connection->fetchAssociative($sql, [
+        -- Total general (siempre correcto)
+        COALESCE(SUM(p.total), 0) AS total_ventas,
+
+        -- EFECTIVO:
+        -- Si tiene total_efectivo > 0 → usarlo
+        -- Si no → usar total (efectivo puro)
+        COALESCE(SUM(
+            CASE 
+                WHEN p.total_efectivo > 0 THEN p.total_efectivo
+                WHEN p.total_transferencia = 0 THEN p.total
+                ELSE 0
+            END
+        ), 0) AS ventas_efectivo,
+
+        -- TRANSFERENCIA:
+        -- Solo si hay monto explícito
+        COALESCE(SUM(
+            CASE 
+                WHEN p.total_transferencia > 0 THEN p.total_transferencia
+                ELSE 0
+            END
+        ), 0) AS ventas_transferencia
+
+    FROM pedidos p
+    WHERE p.estado_id = 2
+      AND p.empresa_id = :empresa_id
+      AND p.caja_id = :caja_id
+      AND p.fecha_creado BETWEEN :fechaDesde AND :fechaHasta
+";
+
+
+        return $this->connection->fetchAssociative($sql, [
             'empresa_id' => $empresa_id,
+            'caja_id'    => (int)$caja['id'],
             'fechaDesde' => $fechaDesde,
             'fechaHasta' => $fechaHasta,
-            'caja_id'    => (int) $caja['id'],
-        ]);
-
-        return $result ?: [
+        ]) ?: [
             'total_pedidos' => 0,
             'total_ventas' => 0,
             'ventas_efectivo' => 0,
             'ventas_transferencia' => 0,
         ];
     }
+
 
     /**
      * @param int $empresa_id

@@ -396,7 +396,7 @@ const CashRegisterPage: React.FC = () => {
                         <input
                           type="number"
                           id="openAmount"
-                          className="form-input w-full"
+                          className="form-input w-full text-gray-700"
                           value={openAmount}
                           onChange={(e) => setOpenAmount(e.target.value)}
                           min="0"

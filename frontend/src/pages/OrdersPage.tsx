@@ -117,18 +117,46 @@ const OrdersPage: React.FC = () => {
     if (!selectedOrderForComprobante || !comprobanteImageFile) return;
 
     try {
-      await uploadComprobanteImage(Number(selectedOrderForComprobante.id), comprobanteImageFile);
-      completeOrder(selectedOrderForComprobante.id);
+        // 👉 metodo de pago REAL elegido
+        const metodoPago = paymentMethod; // "cash" | "transfer" | "mixed"
+        const metodoPagoId = mapPaymentMethodToId(metodoPago);
 
-      // Refrescar pedidos después de subir comprobante
-      const updatedOrders = await fetchPedidos();
-      setOrders(updatedOrders);
+        // 👉 totales según método
+        const totalCash =
+            metodoPago === "cash"
+                ? selectedOrderForComprobante.total
+                : metodoPago === "mixed"
+                    ? splitPayment.cash
+                    : 0;
 
-      // Limpiar estados del modal
-      setShowComprobanteModal(false);
-      setSelectedOrderForComprobante(null);
-      setComprobanteImageFile(null);
-      setComprobanteImagePreview('');
+        const totalTransfer =
+            metodoPago === "transfer"
+                ? selectedOrderForComprobante.total
+                : metodoPago === "mixed"
+                    ? splitPayment.transfer
+                    : 0;
+
+        // 📤 Subir comprobante + metodo + totales
+        await uploadComprobanteImage(
+            Number(selectedOrderForComprobante.id),
+            comprobanteImageFile,
+            metodoPagoId,
+            totalCash,
+            totalTransfer
+        );
+
+        // ✅ Completar pedido
+        await completeOrder(selectedOrderForComprobante.id);
+
+        // 🔄 Refrescar pedidos
+        const updatedOrders = await fetchPedidos();
+        setOrders(updatedOrders);
+
+        // 🧹 Limpiar estados del modal
+        setShowComprobanteModal(false);
+        setSelectedOrderForComprobante(null);
+        setComprobanteImageFile(null);
+        setComprobanteImagePreview('');
     } catch (error) {
       console.error('Error al subir comprobante:', error);
         showToast( 'Hubo un error al subir el comprobante. Intente nuevamente.', 'error');
@@ -228,8 +256,11 @@ const OrdersPage: React.FC = () => {
         }
         return true
     }
-    const mapPaymentMethodToId = (): number => {
-        switch (splitPaymentMethod) {
+
+    const mapPaymentMethodToId = (
+        method: "cash" | "transfer" | "mixed"
+    ): number => {
+        switch (method) {
             case "cash":
                 return 1;
             case "transfer":
@@ -240,6 +271,8 @@ const OrdersPage: React.FC = () => {
                 return 1;
         }
     };
+
+
     const handleProcessSplit = async () => {
         if (!selectedOrderForSplit) return;
 
@@ -259,32 +292,64 @@ const OrdersPage: React.FC = () => {
         );
         const isAllFullySelected = totalSelectedQty > 0 && totalSelectedQty === totalOriginalQty;
 
-        // === Caso 1: todos los productos seleccionados -> completar pedido ===
+        /* =========================================================
+      CASO 1: TODOS LOS PRODUCTOS → COMPLETAR PEDIDO ORIGINAL
+      ========================================================= */
         if (isAllFullySelected) {
             if (splitPaymentMethod === "mixed" && !validateSplitPayment()) {
-                showToast("El monto total del pago debe ser igual al total de los productos seleccionados", "warning");
+                showToast(
+                    "El monto total del pago debe ser igual al total del pedido",
+                    "warning"
+                );
                 return;
             }
 
-            if ((splitPaymentMethod === "transfer" || splitPaymentMethod === "mixed") && !splitTransferImageFile) {
-                showToast("Debe subir el comprobante de transferencia", "info");
+            if (
+                (splitPaymentMethod === "transfer" ||
+                    splitPaymentMethod === "mixed") &&
+                !splitTransferImageFile
+            ) {
+                showToast(
+                    "Debe subir el comprobante de transferencia",
+                    "info"
+                );
                 return;
             }
 
             try {
-                // 🔹 Subir comprobante si existe
+                const metodoPago = splitPaymentMethod; // cash | transfer | mixed
+                const metodoPagoId = mapPaymentMethodToId(metodoPago);
+
+                const totalCash =
+                    metodoPago === "cash"
+                        ? selectedOrderForSplit.total
+                        : metodoPago === "mixed"
+                            ? splitPayment.cash
+                            : 0;
+
+                const totalTransfer =
+                    metodoPago === "transfer"
+                        ? selectedOrderForSplit.total
+                        : metodoPago === "mixed"
+                            ? splitPayment.transfer
+                            : 0;
+
+                // 🔴 IMPORTANTE: acá es donde SE DEFINE el método final
                 if (splitTransferImageFile) {
-                    await uploadComprobanteImage(Number(selectedOrderForSplit.id), splitTransferImageFile);
+                    await uploadComprobanteImage(
+                        Number(selectedOrderForSplit.id),
+                        splitTransferImageFile,
+                        metodoPagoId,
+                        totalCash,
+                        totalTransfer
+                    );
                 }
 
-                // 🔹 Completar pedido original
                 await completeOrder(selectedOrderForSplit.id);
 
-                // 🔹 Refrescar pedidos
                 const updatedOrders = await fetchPedidos();
                 setOrders(updatedOrders);
 
-                // 🔹 Reset modal y estados
                 setShowSplitModal(false);
                 setSelectedOrderForSplit(null);
                 setSplitOrderItems([]);
@@ -298,12 +363,17 @@ const OrdersPage: React.FC = () => {
                 return;
             } catch (error) {
                 console.error("Error al completar el pedido:", error);
-                showToast("Hubo un error al completar el pedido. Intente nuevamente.", "error");
+                showToast(
+                    "Hubo un error al completar el pedido",
+                    "error"
+                );
                 return;
             }
         }
 
-        // === Caso 2: pedido dividido (parcial) ===
+        /* =========================================================
+       CASO 2: PEDIDO PARCIAL (DIVIDIDO)
+       ========================================================= */
         if (!splitCustomerName.trim()) {
             showToast("Ingrese el nombre del cliente", "info");
             return;
@@ -313,23 +383,34 @@ const OrdersPage: React.FC = () => {
             const totalPago = splitPayment.cash + splitPayment.transfer;
             const totalSeleccionado = getSelectedItemsTotal();
             if (Math.abs(totalPago - totalSeleccionado) > 0.01) {
-                showToast("La suma de efectivo y transferencia debe igualar el total del pedido.", "warning");
+                showToast(
+                    "La suma de efectivo y transferencia debe igualar el total",
+                    "warning"
+                );
                 return;
             }
         }
 
-        if ((splitPaymentMethod === "transfer" || splitPaymentMethod === "mixed") && !splitTransferImageFile) {
-            showToast("Debe subir el comprobante de transferencia", "warning");
+        if (
+            (splitPaymentMethod === "transfer" ||
+                splitPaymentMethod === "mixed") &&
+            !splitTransferImageFile
+        ) {
+            showToast(
+                "Debe subir el comprobante de transferencia",
+                "warning"
+            );
             return;
         }
 
         try {
             const selectedTotal = getSelectedItemsTotal();
+            const metodoPagoId = mapPaymentMethodToId(splitPaymentMethod);
 
-            // 1️⃣ Crear la nueva orden
+            /* 1️⃣ Crear nuevo pedido */
             const newOrder = await createPedido(
                 splitCustomerName,
-                mapPaymentMethodToId(), // ✅ 1 | 2 | 3
+                metodoPagoId,
                 selectedTotal,
                 selectedItems.map((item) => ({
                     id: item.id,
@@ -350,17 +431,25 @@ const OrdersPage: React.FC = () => {
                         : 0
             );
 
-            // 2️⃣ Si hay comprobante, subirlo al nuevo pedido
+            /* 2️⃣ Subir comprobante al nuevo pedido */
             if (splitTransferImageFile && newOrder?.id) {
-                await uploadComprobanteImage(newOrder.id, splitTransferImageFile);
+                await uploadComprobanteImage(
+                    newOrder.id,
+                    splitTransferImageFile,
+                    metodoPagoId,
+                    splitPaymentMethod === "cash" ? selectedTotal : splitPayment.cash,
+                    splitPaymentMethod === "transfer"
+                        ? selectedTotal
+                        : splitPayment.transfer
+                );
             }
 
-            // 3️⃣ Actualizar pedido original con los ítems restantes
-            // 🔹 Recalculamos los ítems restantes de forma segura
+            /* 3️⃣ Recalcular ítems restantes */
             const remainingItems: OrderItem[] = splitOrderItems
                 .map((item) => {
                     if (item.selected && item.selectedQuantity > 0) {
-                        const remainingQty = item.quantity - item.selectedQuantity;
+                        const remainingQty =
+                            item.quantity - item.selectedQuantity;
                         return remainingQty > 0
                             ? {
                                 id: item.id,
@@ -368,9 +457,8 @@ const OrdersPage: React.FC = () => {
                                 price: item.price,
                                 quantity: remainingQty,
                             }
-                            : null; // filtramos ítems con cantidad 0
+                            : null;
                     }
-                    // No seleccionado, queda igual
                     return {
                         id: item.id,
                         name: item.name,
@@ -380,30 +468,21 @@ const OrdersPage: React.FC = () => {
                 })
                 .filter(Boolean) as OrderItem[];
 
-            // 🔹 Actualizamos el pedido original o lo completamos si ya no queda nada
             if (remainingItems.length > 0) {
                 await updatePedido(
                     Number(selectedOrderForSplit.id),
                     selectedOrderForSplit.customerName,
-                    selectedOrderForSplit.paymentMethod,
-                    remainingItems.map((item) => ({
-                        id: item.id,
-                        name: item.name,
-                        price: item.price,
-                        quantity: item.quantity,
-                    })),
+                    "cash", // el restante queda abierto
+                    remainingItems,
                     ""
                 );
             } else {
                 await completeOrder(selectedOrderForSplit.id);
             }
 
-
-            // 4️⃣ Refrescar pedidos
             const updatedOrders = await fetchPedidos();
             setOrders(updatedOrders);
 
-            // 5️⃣ Reset y cierre modal
             setShowSplitModal(false);
             setSelectedOrderForSplit(null);
             setSplitOrderItems([]);
@@ -416,7 +495,8 @@ const OrdersPage: React.FC = () => {
             showToast("Pedido dividido exitosamente", "success");
         } catch (error) {
             console.error("Error al dividir el pedido:", error);
-            showToast( "Hubo un error al dividir el pedido. Intente nuevamente.",
+            showToast(
+                "Hubo un error al dividir el pedido",
                 "error"
             );
         }
@@ -494,34 +574,50 @@ const OrdersPage: React.FC = () => {
         }
 
         // Validación de pagos mixtos
-        if (paymentMethod === "mixed") {
+        if (splitPaymentMethod === "mixed") {
             const totalPago = splitPayment.cash + splitPayment.transfer;
             if (Math.abs(totalPago - cartTotal) > 0.01) {
-                showToast('La suma de efectivo y transferencia debe igualar el total', 'warning');
+                showToast(
+                    'La suma de efectivo y transferencia debe igualar el total',
+                    'warning'
+                );
                 return;
             }
         }
 
         try {
+            const metodoPago: "cash" | "transfer" | "mixed" = splitPaymentMethod;
+
+            // 🧮 Totales según metodo REAL
+            const totalCash =
+                metodoPago === "cash"
+                    ? cartTotal
+                    : metodoPago === "mixed"
+                        ? splitPayment.cash
+                        : 0;
+
+            const totalTransfer =
+                metodoPago === "transfer"
+                    ? cartTotal
+                    : metodoPago === "mixed"
+                        ? splitPayment.transfer
+                        : 0;
+
+
             if (editingOrder) {
+                // ✏️ Editar pedido existente
                 await updatePedido(
                     Number(editingOrder.id),
                     customerName,
-                    paymentMethod,
+                    metodoPago,
                     cart,
                     transferImageUrl
                 );
             } else {
-                const totalCash =
-                    paymentMethod === "cash" ? cartTotal :
-                        paymentMethod === "mixed" ? splitPayment.cash : 0;
-                const totalTransfer =
-                    paymentMethod === "transfer" ? cartTotal :
-                        paymentMethod === "mixed" ? splitPayment.transfer : 0;
-
+                // ➕ Crear pedido nuevo
                 await createPedido(
                     customerName,
-                    mapPaymentMethodToId(),
+                    mapPaymentMethodToId(metodoPago), // ✅ mixed => 3
                     cartTotal,
                     cart,
                     transferImageUrl,
@@ -533,9 +629,11 @@ const OrdersPage: React.FC = () => {
             const updatedOrders = await fetchPedidos();
             setOrders(updatedOrders);
 
+            // 🔄 Reset UI
             setCart([]);
             setCustomerName('');
-            setPaymentMethod('cash');
+            setSplitPaymentMethod('cash');
+            setSplitPayment({ cash: 0, transfer: 0 });
             setTransferImageUrl('');
             setShowPaymentModal(false);
             setActiveTab('orderList');
@@ -1245,7 +1343,7 @@ const OrdersPage: React.FC = () => {
                                 <label className="block text-sm font-medium text-gray-700 mb-2">Nombre del Cliente</label>
                                 <input
                                     type="text"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#FF6B35]"
+                                    className="w-full px-3 py-2 border border-gray-300 text-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-[#FF6B35]"
                                     placeholder="Ingrese nombre del cliente"
                                     value={splitCustomerName}
                                     onChange={(e) => setSplitCustomerName(e.target.value)}
@@ -1407,7 +1505,7 @@ const OrdersPage: React.FC = () => {
                                                 step="0.01"
                                                 min="0"
                                                 max={getSelectedItemsTotal()}
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#FF6B35]"
+                                                className="w-full px-3 py-2 border border-gray-300 text-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-[#FF6B35]"
                                                 value={splitPayment.cash === 0 ? "" : splitPayment.cash} // 👈 clave
                                                 onChange={(e) => {
                                                     const value = e.target.value;
@@ -1425,7 +1523,7 @@ const OrdersPage: React.FC = () => {
                                                 step="0.01"
                                                 min="0"
                                                 max={getSelectedItemsTotal()}
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#FF6B35]"
+                                                className="w-full px-3 py-2 border border-gray-300 text-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-[#FF6B35]"
                                                 value={splitPayment.transfer === 0 ? "" : splitPayment.transfer}
                                                 onChange={(e) => {
                                                     const value = e.target.value;

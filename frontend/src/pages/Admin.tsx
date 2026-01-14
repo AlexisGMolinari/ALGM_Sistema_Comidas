@@ -58,6 +58,7 @@ const AdminPage: React.FC = () => {
             }));
             setUsers(mapped);
         } catch (error) {
+            console.error(error);
             showToast('No se pudieron cargar los usuarios', 'error');
         }
     };
@@ -175,26 +176,49 @@ const AdminPage: React.FC = () => {
             setNewUserPassword('');
             setNewUserActivo(1);
 
-        } catch (error: any) {
+        } catch (error) {
             console.error(error);
-            showToast(error.response?.data?.message || 'Error al guardar usuario', 'error');
+            showToast('Error al guardar usuario', 'error');
         }
     };
 
-    // ----------- Delete User ----------------
-    const handleDelete = async (userId: number) => {
-        const confirmDelete = window.confirm('¿Estás seguro de eliminar este usuario?');
-        if (!confirmDelete) return;
+    // ----------- Desactiva User ----------------
+    const toggleUserStatus = async (user: User) => {
+        const nuevoEstado = user.activo === 1 ? 0 : 1;
+
+        const confirm = window.confirm(
+            `¿Seguro que deseas ${nuevoEstado ? 'activar' : 'desactivar'} a "${user.nombre}"?`
+        );
+        if (!confirm) return;
 
         try {
-            // await auth.deleteUsuario(userId);
-            setUsers(users.filter(u => u.id !== userId));
-            showToast('Usuario eliminado correctamente', 'success');
+            await auth.updateUsuario(user.id, {
+                ...user,
+                activo: nuevoEstado,
+            });
+
+            setUsers(prev =>
+                prev.map(u =>
+                    u.id === user.id
+                        ? {
+                            ...u,
+                            activo: nuevoEstado,
+                            status: nuevoEstado === 1 ? 'active' : 'inactive',
+                        }
+                        : u
+                )
+            );
+
+            showToast(
+                `Usuario ${nuevoEstado ? 'activado' : 'desactivado'} correctamente`,
+                'success'
+            );
         } catch (error) {
-            console.error('Error al eliminar usuario:', error);
-            showToast('No se pudo eliminar el usuario', 'error');
+            console.error(error);
+            showToast('No se pudo actualizar el estado del usuario', 'error');
         }
     };
+
 
     return (
         <div className="space-y-6">
@@ -274,7 +298,16 @@ const AdminPage: React.FC = () => {
                                         <button className="text-blue-500 hover:text-blue-700" onClick={() => openEditModal(user)}>
                                             <Pencil size={16} />
                                         </button>
-                                        <button className="text-red-500 hover:text-red-700" onClick={() => handleDelete(user.id)}><X size={16} /></button>
+                                        <button
+                                            className={`hover:text-red-700 ${
+                                                user.activo === 1 ? 'text-red-500' : 'text-green-600'
+                                            }`}
+                                            onClick={() => toggleUserStatus(user)}
+                                            title={user.activo === 1 ? 'Desactivar usuario' : 'Activar usuario'}
+                                        >
+                                            {user.activo === 1 ? <X size={16} /> : <Check size={16} />}
+                                        </button>
+
                                     </td>
                                 </tr>
                             ))}

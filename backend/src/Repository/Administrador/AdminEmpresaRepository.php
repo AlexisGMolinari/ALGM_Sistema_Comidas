@@ -27,10 +27,15 @@ class AdminEmpresaRepository extends TablasSimplesAbstract
 	 */
 	public function getAllPaginados(Request $request): array {
         $camposRequest = $request->query->all();
-		$sql = "SELECT em.id, em.nombre, em.url_sitioweb, us.nombre as nombre_usuario, us.activo
-            FROM empresa em
-            LEFT join usuarios us on em.id = us.empresa_id ";
-        //    where us.roles = 'ROLE_USER'";
+		$sql = "SELECT em.id, em.nombre, em.url_sitioweb, ua.nombre AS nombre_usuario, em.activa
+                FROM empresa em
+                LEFT JOIN (SELECT u.empresa_id,
+                        MIN(u.id) AS usuario_id,
+                        SUBSTRING_INDEX(GROUP_CONCAT(u.nombre ORDER BY u.id ASC),',', 1) AS nombre
+                    FROM usuarios u
+                    WHERE u.roles = 'ROLE_ADMIN' OR u.roles = 'ROLE_ADMIN, ROLE_SUPERADMIN'
+                    GROUP BY u.empresa_id
+                ) ua ON ua.empresa_id = em.id";
 		$arrParam = [ 'em.id', 'em.nombre', 'us.nombre', 'em.url_sitioweb'];
 
         $paginador = new Paginador();
@@ -38,11 +43,22 @@ class AdminEmpresaRepository extends TablasSimplesAbstract
             ->setServerSideParams($camposRequest)
             ->setSql($sql)
             ->setContinuaWhere(true)
-            ->setCamposAFiltrar($arrParam)
-            ->setGroupBy(' GROUP BY em.id');
+            ->setCamposAFiltrar($arrParam);
 
         return $paginador->getServerSideRegistros();
 	}
+
+    /**
+     * Devuelve las empresas que no tienen asignado un usuario
+     * @return array
+     * @throws Exception
+     */
+    public function getEmpresasSinUsuario(): array
+    {
+        $sql = 'SELECT e.* FROM empresa e WHERE NOT EXISTS (SELECT 1 FROM usuarios u WHERE u.empresa_id = e.id)';
+        return $this->connection->fetchAllAssociative($sql);
+    }
+
 
     /**
      * Actualiza el Usuario permitiéndole ingresar o no, a la empresa
@@ -78,5 +94,22 @@ class AdminEmpresaRepository extends TablasSimplesAbstract
             throw new HttpException(400, 'No se encontró el cliente (ID: ' . $idCliente . ')');
         }
         return $registro;
+    }
+
+    /**
+     * @param int $id
+     * @return void
+     * @throws Exception
+     */
+    public function eliminarEmpresa(int $id): void
+    {
+        $sql = 'SELECT COUNT(1) FROM usuarios WHERE empresa_id = :empresa_id';
+        $cantidadUsuarios = (int) $this->connection->fetchOne($sql, [
+            'empresa_id' => $id
+        ]);
+        if ($cantidadUsuarios > 0) {
+            throw new HttpException(400, "La empresa no puede ser eliminada porque tiene usuarios asociados.");
+        }
+        $this->deleteRegistro($id);
     }
 }

@@ -150,7 +150,7 @@ class AdminPedidoRepository extends TablasSimplesAbstract
             // Verificamos si el producto es un combo
             if ($productoRepo->esCombo($productoId)) {
                 // Descontar componentes del combo
-                $productoRepo->descontarStockCombo($productoId, $cantidad, 2, $pedidoId);
+                $productoRepo->descontarStockCombo($productoId, $cantidad, 2, $empresa_id, $pedidoId);
                 $productoRepo->actualizoStock($productoId, 2, $cantidad, $empresa_id);
             } else {
                 // Producto individual: actualizar stock y registrar movimiento
@@ -245,7 +245,8 @@ class AdminPedidoRepository extends TablasSimplesAbstract
                             'pedido_id' => $idPedido,
                             'producto_id' => $pid,
                             'tipo_movimiento_id' => 1,
-                            'cantidad' => -$delta
+                            'cantidad' => -$delta,
+                            'empresa_id' => $empresa_id,
                         ]);
                     }
                 } elseif ($oldQty === 0 && $newQty > 0) {
@@ -262,7 +263,8 @@ class AdminPedidoRepository extends TablasSimplesAbstract
                         'pedido_id' => $idPedido,
                         'producto_id' => $pid,
                         'tipo_movimiento_id' => 2,
-                        'cantidad' => $newQty
+                        'cantidad' => $newQty,
+                        'empresa_id' => $empresa_id,
                     ]);
                 } else {
                     // actualizar cantidad y/o precio
@@ -281,7 +283,8 @@ class AdminPedidoRepository extends TablasSimplesAbstract
                             'pedido_id' => $idPedido,
                             'producto_id' => $pid,
                             'tipo_movimiento_id' => 2,
-                            'cantidad' => $delta
+                            'cantidad' => $delta,
+                            'empresa_id' => $empresa_id,
                         ]);
                     } elseif ($delta < 0) {
                         // bajaste cantidad => entrada
@@ -290,7 +293,8 @@ class AdminPedidoRepository extends TablasSimplesAbstract
                             'pedido_id' => $idPedido,
                             'producto_id' => $pid,
                             'tipo_movimiento_id' => 1,
-                            'cantidad' => -$delta
+                            'cantidad' => -$delta,
+                            'empresa_id' => $empresa_id,
                         ]);
                     }
                 }
@@ -332,6 +336,9 @@ class AdminPedidoRepository extends TablasSimplesAbstract
             $this->connection->update('pedidos', [
                 'comprobante_img' => $nuevoNombre,
                 'estado_id' => 2,
+                'metodo_pago_id'      => $postValues['metodo_pago_id'],
+                'total_efectivo'      => $postValues['total_efectivo'],
+                'total_transferencia' => $postValues['total_transferencia'],
             ], ['id' => $id]);
         } else {
             throw new \Exception("No se recibió archivo válido para el comprobante.");
@@ -367,7 +374,8 @@ class AdminPedidoRepository extends TablasSimplesAbstract
                     'pedido_id' => $idPedido,
                     'producto_id' => $detalle['producto_id'],
                     'tipo_movimiento_id' => 1, // Reposición
-                    'cantidad' => $detalle['cantidad']
+                    'cantidad' => $detalle['cantidad'],
+                    'empresa_id' => $empresa_id,
                 ]);
         }
 
@@ -410,7 +418,7 @@ class AdminPedidoRepository extends TablasSimplesAbstract
 
             if ($productoRepo->esCombo($productoId)) {
                 // Es un combo → reponer componentes
-                $productoRepo->descontarStockCombo($productoId, $cantidad, 1, $idPedido);
+                $productoRepo->descontarStockCombo($productoId, $cantidad, 1, $empresa_id, $idPedido);
                 $productoRepo->actualizoStock($productoId, 1, $cantidad, $empresa_id);
             } else {
                 // Es producto individual → reponer stock directamente

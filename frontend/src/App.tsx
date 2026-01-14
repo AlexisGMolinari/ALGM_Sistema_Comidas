@@ -13,6 +13,9 @@ import ComprobantesPage from './pages/ComprobantesPage';
 import AdminPage from './pages/Admin';
 import Layout from './components/Layout';
 import SuperAdmin from './pages/SuperAdmin';
+import SuperAdminEmpresas from './pages/SuperAdminEmpresa';
+import SuperAdminEmpresaUsuarios from './pages/SuperAdminEmpresaUsuarios';
+
 import './App.css';
 
 // Protected route component
@@ -155,6 +158,29 @@ function App() {
                     </SuperAdminRoute>
                 }
             />
+            <Route
+                path="/superadmin/empresas"
+                element={
+                    <SuperAdminRoute>
+                        <Layout>
+                            <SuperAdminEmpresas />
+                        </Layout>
+                    </SuperAdminRoute>
+                }
+            />
+
+            <Route
+                path="/superadmin/empresas/:empresaId/usuarios"
+                element={
+                    <SuperAdminRoute>
+                        <Layout>
+                            <SuperAdminEmpresaUsuarios />
+                        </Layout>
+                    </SuperAdminRoute>
+                }
+            />
+
+
 
         </Routes>
       </Router>

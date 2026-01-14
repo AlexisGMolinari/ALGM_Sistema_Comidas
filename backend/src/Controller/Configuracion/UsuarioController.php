@@ -11,6 +11,7 @@ use App\Service\GetRequestValidator;
 use Doctrine\DBAL\Exception;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Validator\Constraints\Json;
 
@@ -146,9 +147,16 @@ class UsuarioController extends AbstractController
     {
         $postValues = $requestValidator->getRestBody();
         $repository->checkIdExiste($id);
+        if (!isset($postValues['usuario'])) {
+            throw new HttpException(400, 'Formato inválido: falta el nodo usuario');
+        }
         $usuario = $postValues['usuario'];
+        // Limpieza de campos que NO van a BD
+        unset($usuario['empresa_id'], $usuario['status']);
         $type->controloRegistro($usuario, $id);
-        $repository->updateUsuario($postValues, $id);
+        $repository->updateUsuario([
+            'usuario' => $usuario
+        ], $id);
         return $this->json([]);
     }
 
