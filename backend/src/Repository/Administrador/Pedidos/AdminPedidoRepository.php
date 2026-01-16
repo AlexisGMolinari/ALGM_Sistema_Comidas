@@ -461,14 +461,14 @@ class AdminPedidoRepository extends TablasSimplesAbstract
             FROM (
                 SELECT DATE(fecha_creado) AS fecha
                 FROM pedidos
-                WHERE fecha_creado >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+                WHERE DATE(fecha_creado) BETWEEN DATE_SUB(CURDATE(), INTERVAL 6 DAY) AND CURDATE()
                   AND empresa_id = :empresa_id
             
                 UNION
             
-                SELECT DATE(fecha)
+                SELECT DATE(fecha) AS fecha
                 FROM egresos
-                WHERE fecha >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+                WHERE DATE(fecha) BETWEEN DATE_SUB(CURDATE(), INTERVAL 6 DAY) AND CURDATE()
                   AND empresa_id = :empresa_id
             ) d
             LEFT JOIN pedidos p
