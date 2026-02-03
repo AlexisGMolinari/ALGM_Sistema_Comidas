@@ -203,7 +203,7 @@ class ProductoRepository extends TablasSimplesAbstract
         $sql = "SELECT p.* 
             FROM producto p
             INNER JOIN categoria_producto cp ON p.categoria_prod_id = cp.id
-            WHERE cp.nombre = 'Combos' AND p.activo = 1
+            WHERE cp.nombre = 'Combos' AND p.activo = 1 AND p.empresa_id = " . $this->security->getUser()->getEmpresa() ."
             ORDER BY p.nombre";
 
         return $this->connection->fetchAllAssociative($sql);
