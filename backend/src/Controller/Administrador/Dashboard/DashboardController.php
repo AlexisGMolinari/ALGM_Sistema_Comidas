@@ -22,8 +22,8 @@ class DashboardController extends AbstractController
     public function getDashboard(DashboardRepository $repository): JsonResponse
     {
         $empresa_id = $this->getUser()->getEmpresa();
-
-        $registro = $repository->datosInicio($empresa_id);
+        $usuario_id = $this->getUser()->getId();
+        $registro = $repository->datosInicio($empresa_id, $usuario_id);
         if (empty($registro)) {
             return $this->json([
                 'status' => 'error',

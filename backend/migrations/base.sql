@@ -319,3 +319,9 @@ INSERT INTO `metodo_pago` (`id`, `nombre`) VALUES (3, 'mixto');
 
 ALTER TABLE `caja`
     CHANGE COLUMN `id` `id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT FIRST;
+
+-- 14
+ALTER TABLE `caja`
+    CHANGE COLUMN `monto_final` `monto_final` DECIMAL(12,2) NULL DEFAULT NULL AFTER `monto_inicial`,
+    CHANGE COLUMN `total_ventas` `total_ventas` DECIMAL(12,2) NOT NULL DEFAULT '0.00' AFTER `monto_final`,
+    CHANGE COLUMN `total_gastos` `total_gastos` DECIMAL(12,2) NOT NULL DEFAULT '0.00' AFTER `total_ventas`;

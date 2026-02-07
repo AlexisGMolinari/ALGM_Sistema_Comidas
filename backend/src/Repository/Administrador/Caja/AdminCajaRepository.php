@@ -80,17 +80,20 @@ class AdminCajaRepository extends TablasSimplesAbstract
 
     /**
      * @param int $empresa_id
+     * @param int $usuario_id
      * @return array
      * @throws Exception
      */
-    public function getCajaActual(int $empresa_id): array
+    public function getCajaActual(int $empresa_id, int $usuario_id): array
     {
         $sql = self::SQLBROWSE . "
-        WHERE c.cerrada_fecha IS NULL AND c.empresa_id = :empresa_id
+        WHERE c.cerrada_fecha IS NULL 
+        AND c.empresa_id = :empresa_id
+        AND c.abierta_usuario_id = :usuario_id
         ORDER BY c.abierta_fecha DESC
         LIMIT 1";
         $caja = $this->connection->fetchAssociative($sql, [
-            'empresa_id' => $empresa_id
+            'empresa_id' => $empresa_id, 'usuario_id' => $usuario_id
         ]);
 
         if (!$caja) {

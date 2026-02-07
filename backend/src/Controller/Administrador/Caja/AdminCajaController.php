@@ -10,6 +10,7 @@ use App\Service\GetRequestValidator;
 use Doctrine\DBAL\Exception;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\Routing\Attribute\Route;
 
 #[Route("api/caja", name: "api_caja_")]
@@ -24,7 +25,8 @@ class AdminCajaController extends AbstractController
     public function cajaActual(AdminCajaRepository $repository): JsonResponse
     {
         $empresa_id = $this->getUser()->getEmpresa();
-        $registro = $repository->getCajaActual($empresa_id);
+        $usuario_id = $this->getUser()->getId();
+        $registro = $repository->getCajaActual($empresa_id, $usuario_id);
         if (empty($registro)) {
             return $this->json([
                 'status' => 'error',
@@ -51,6 +53,13 @@ class AdminCajaController extends AbstractController
         $postValues['abierta_usuario_id'] = $this->getUser()->getId();
         $postValues['abierta'] = 1;
         $postValues['empresa_id'] = $this->getUser()->getEmpresa();
+        $yaAbierta = $repository->getCajaActual(
+            $this->getUser()->getEmpresa(),
+            $this->getUser()->getId()
+        );
+        if (!empty($yaAbierta)) {
+            throw new HttpException(400, "Ya tienes una caja abierta.");
+        }
         $repository->createRegistro($postValues);
         return $this->json([], 201);
     }

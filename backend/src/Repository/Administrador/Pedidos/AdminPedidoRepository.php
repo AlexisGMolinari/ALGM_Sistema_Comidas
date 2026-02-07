@@ -454,33 +454,40 @@ class AdminPedidoRepository extends TablasSimplesAbstract
         $empresaId = $this->security->getUser()->getEmpresa();
 
         $sql = "SELECT
-                d.fecha AS date,
-                COALESCE(SUM(p.total), 0) AS totalSales,
-                COUNT(p.id) AS ordersCount,
-                COALESCE(SUM(e.monto), 0) AS totalExpenses
-            FROM (
-                SELECT DATE(fecha_creado) AS fecha
-                FROM pedidos
-                WHERE DATE(fecha_creado) BETWEEN DATE_SUB(CURDATE(), INTERVAL 6 DAY) AND CURDATE()
-                  AND empresa_id = :empresa_id
-            
-                UNION
-            
-                SELECT DATE(fecha) AS fecha
-                FROM egresos
-                WHERE DATE(fecha) BETWEEN DATE_SUB(CURDATE(), INTERVAL 6 DAY) AND CURDATE()
-                  AND empresa_id = :empresa_id
-            ) d
-            LEFT JOIN pedidos p
-                ON DATE(p.fecha_creado) = d.fecha
-               AND p.estado_id != 3
-               AND p.empresa_id = :empresa_id
-            LEFT JOIN egresos e
-                ON DATE(e.fecha) = d.fecha
-               AND e.empresa_id = :empresa_id
-            GROUP BY d.fecha
-            ORDER BY d.fecha DESC
-            ";
+                    fechas.fecha AS date,
+                    COALESCE(p.totalSales, 0) AS totalSales,
+                    COALESCE(p.ordersCount, 0) AS ordersCount,
+                    COALESCE(e.totalExpenses, 0) AS totalExpenses
+                FROM (
+                    SELECT CURDATE() - INTERVAL 0 DAY AS fecha
+                    UNION SELECT CURDATE() - INTERVAL 1 DAY
+                    UNION SELECT CURDATE() - INTERVAL 2 DAY
+                    UNION SELECT CURDATE() - INTERVAL 3 DAY
+                    UNION SELECT CURDATE() - INTERVAL 4 DAY
+                    UNION SELECT CURDATE() - INTERVAL 5 DAY
+                    UNION SELECT CURDATE() - INTERVAL 6 DAY
+                ) fechas
+                LEFT JOIN (
+                    SELECT 
+                        DATE(fecha_creado) fecha,
+                        SUM(total) totalSales,
+                        COUNT(id) ordersCount
+                    FROM pedidos
+                    WHERE estado_id != 3
+                      AND empresa_id = :empresa_id
+                      AND DATE(fecha_creado) BETWEEN DATE_SUB(CURDATE(), INTERVAL 6 DAY) AND CURDATE()
+                    GROUP BY DATE(fecha_creado)
+                ) p ON p.fecha = fechas.fecha
+                LEFT JOIN (
+                    SELECT 
+                        DATE(fecha) fecha,
+                        SUM(monto) totalExpenses
+                    FROM egresos
+                    WHERE empresa_id = :empresa_id
+                      AND DATE(fecha) BETWEEN DATE_SUB(CURDATE(), INTERVAL 6 DAY) AND CURDATE()
+                    GROUP BY DATE(fecha)
+                ) e ON e.fecha = fechas.fecha
+                ORDER BY fechas.fecha DESC";
         return $this->connection->fetchAllAssociative($sql, [
             'empresa_id' => $empresaId
         ]);

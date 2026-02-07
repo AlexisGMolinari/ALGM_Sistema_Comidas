@@ -16,9 +16,9 @@ class AdminCajaType extends AbstractTypes
     {
         return new Assert\Collection([
             'id'             => new Assert\Range(['min' => $id, 'max' => $id]),
-            'monto_final'  => [new Assert\Optional(), new Assert\Range(['min' => 0.0])],
-            'total_ventas'  => [new Assert\Optional(), new Assert\Range(['min' => 0.0])],
-            'total_gastos'  => [new Assert\Optional(), new Assert\Range(['min' => 0.0])],
+            'monto_final'  => [new Assert\Optional()],
+            'total_ventas'  => [new Assert\Optional()],
+            'total_gastos'  => [new Assert\Optional()],
             'observaciones'    => [new Assert\Optional()],
         ]);
     }

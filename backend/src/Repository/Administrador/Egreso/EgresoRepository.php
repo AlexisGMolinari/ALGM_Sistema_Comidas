@@ -70,7 +70,7 @@ class EgresoRepository extends TablasSimplesAbstract
      */
     public function createEgreso(array $postValues, int $empresa_id): void
     {
-        $caja = (new AdminCajaRepository($this->connection, $this->security))->getCajaActual($empresa_id);
+        $caja = (new AdminCajaRepository($this->connection, $this->security))->getCajaActual($empresa_id, $postValues['usuario_id']);
         if (!$caja) {
             throw new HttpException(400, "Se necesita abrir una caja para poder realizar un egreso.");
         }

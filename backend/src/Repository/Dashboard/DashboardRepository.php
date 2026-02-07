@@ -11,15 +11,16 @@ class DashboardRepository extends TablasSimplesAbstract
 {
     /**
      * @param int $empresa_id
+     * @param int $usuario_id
      * @return array
      * @throws Exception
      */
-    public function datosInicio(int $empresa_id): array
+    public function datosInicio(int $empresa_id, int $usuario_id): array
     {
         $pedidoRepository = (new AdminPedidoRepository($this->connection, $this->security));
 
         $cajaRepository = (new AdminCajaRepository($this->connection, $this->security));
-        $estadoCaja = $cajaRepository->getCajaActual($empresa_id);
+        $estadoCaja = $cajaRepository->getCajaActual($empresa_id, $usuario_id);
         // Si no hay caja abierta, retornamos sólo eso
         if (empty($estadoCaja)) {
             return [
