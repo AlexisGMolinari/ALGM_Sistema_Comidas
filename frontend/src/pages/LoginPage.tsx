@@ -60,7 +60,7 @@ const LoginPage: React.FC = () => {
 
             setTimeout(() => {
                 setErrorShake(false);
-            }, 500);
+            }, 400);
 
             console.error(err);
         } finally {
@@ -80,9 +80,10 @@ const LoginPage: React.FC = () => {
             <div className="absolute w-[400px] h-[400px] bg-indigo-500/20 rounded-full blur-3xl bottom-0 right-0"></div>
 
             {/* CARD */}
-            <div className={`relative max-w-md w-full backdrop-blur-xl bg-white/10 p-10 rounded-3xl shadow-2xl border border-white/20 text-white
-            transition-all duration-700 ease-out animate-loginEntry
-            ${errorShake ? 'animate-shake border-red-400/40' : ''}`}>
+            <div className="relative max-w-md w-full animate-loginEntry">
+                <div className={`backdrop-blur-xl bg-white/10 p-10 rounded-3xl shadow-2xl border border-white/20 text-white
+                    transition-all duration-700 ease-out
+                    ${errorShake ? 'animate-shake border-red-400/40' : ''}`}>
                 {/* OVERLAY DE ÉXITO */}
                 {loginSuccess && (
                     <div className="absolute inset-0 rounded-3xl overflow-hidden z-50">
@@ -208,10 +209,11 @@ const LoginPage: React.FC = () => {
                         ALGM
                     </a>
                 </div>
+
+                </div>
             </div>
         </div>
-    );
-
+    )
 };
 
 export default LoginPage;

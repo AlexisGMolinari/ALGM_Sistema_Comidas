@@ -9,6 +9,22 @@
     scroll-behavior: smooth;
 }
 
+/* Entrada suave del Login después del loader */
+@keyframes loginEntry {
+    0% {
+        opacity: 0;
+        transform: translateY(20px) scale(0.98);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.animate-loginEntry {
+    animation: loginEntry 0.8s ease forwards;
+}
+
 /* Fade general */
 @keyframes fadeInUp {
     from {
@@ -61,18 +77,4 @@
     animation: successFade 0.4s ease-out;
 }
 
-/* Entrada suave del Login después del loader */
-@keyframes loginEntry {
-    0% {
-        opacity: 0;
-        transform: translateY(20px) scale(0.98);
-    }
-    100% {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
-}
 
-.animate-loginEntry {
-    animation: loginEntry 0.8s ease forwards;
-}
