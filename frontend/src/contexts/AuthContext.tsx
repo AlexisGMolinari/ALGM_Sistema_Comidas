@@ -38,8 +38,12 @@ const AuthContext = createContext<AuthContextType>({
 
 // AuthProvider component
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+    const [user, setUser] = useState<User | null>(() => {
+        const storedUser = localStorage.getItem('user');
+        return storedUser ? JSON.parse(storedUser) : null;
+    });
+
+    const [loading, setLoading] = useState(true);
     const { showToast } = useToast();
 
   useEffect(() => {
@@ -53,7 +57,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             localStorage.removeItem('user');
             setUser(null);
           })
-          .finally(() => setLoading(false));
+          .finally(() => {
+              setLoading(false);
+
+              const loader = document.getElementById('initial-loader');
+              if (loader) {
+                  loader.style.opacity = '0';
+                  setTimeout(() => loader.remove(), 500);
+              }
+          });
     } else {
       setLoading(false);
     }

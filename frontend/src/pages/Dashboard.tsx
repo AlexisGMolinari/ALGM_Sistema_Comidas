@@ -6,6 +6,7 @@ import { getDashboardResumen } from "../contexts/api.ts";
 import { DashboardResumen } from "../types";
 import {useToast} from "../components/common/SimpleToast.tsx";
 import {getApiErrorMessage} from "../utils/apiErrors.ts";
+import FullScreenLoader from "../components/FullScreenLoader.tsx";
 
 
 interface QuickAccessCardProps {
@@ -71,7 +72,7 @@ const Dashboard: React.FC = () => {
   }, []);
 
   if (loading || !dashboardData) {
-    return <div className="text-white text-center mt-10">Cargando panel...</div>;
+      return <FullScreenLoader />;
   }
 
   return (
@@ -163,7 +164,6 @@ const Dashboard: React.FC = () => {
                 <p className="text-xl font-bold text-gray-800">{dashboardData.completedOrdersToday}</p>
               </div>
             </div>
-            <Link to="/orders" className="text-[#3BB273] hover:text-[#2E9D60] font-medium text-sm">Ver Historial</Link>
           </div>
         </div>
       </div>

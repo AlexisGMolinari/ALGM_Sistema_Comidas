@@ -5,9 +5,109 @@
       <link rel="icon" type="image/x-icon" href="/LOGO-ALGM.ico" />
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Sistema de Comidas ALGM</title>
+      <style>
+          #initial-loader {
+              position: fixed;
+              inset: 0;
+              background: radial-gradient(circle at top left, #1e3a8a, #0f172a);
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              z-index: 9999;
+              transition: opacity 0.4s ease, transform 0.4s ease;
+          }
+
+          .loader-content {
+              text-align: center;
+              color: white;
+              animation: fadeIn 0.6s ease-in-out;
+          }
+
+          /* Contenedor del logo con glow */
+          .logo-wrapper {
+              position: relative;
+              margin-bottom: 30px;
+          }
+
+          .logo-wrapper::before {
+              content: "";
+              position: absolute;
+              inset: -20px;
+              background: radial-gradient(circle, rgba(255,255,255,0.15), transparent 70%);
+              filter: blur(25px);
+              z-index: -1;
+              animation: pulseGlow 2s infinite ease-in-out;
+          }
+
+          .logo-img {
+              width: 90px;
+              height: auto;
+              animation: float 3s ease-in-out infinite;
+          }
+
+          .brand-name {
+              margin-top: 15px;
+              font-size: 20px;
+              font-weight: 500;
+              letter-spacing: 4px;
+              opacity: 0.8;
+          }
+
+          .progress-container {
+              width: 220px;
+              height: 5px;
+              background: rgba(255,255,255,0.15);
+              border-radius: 10px;
+              overflow: hidden;
+              margin: 0 auto;
+              backdrop-filter: blur(5px);
+          }
+
+          .progress-bar {
+              height: 100%;
+              width: 40%;
+              background: linear-gradient(90deg, #60a5fa, #ffffff);
+              animation: slide 1.2s infinite ease-in-out;
+          }
+
+          @keyframes slide {
+              0% { transform: translateX(-100%); }
+              100% { transform: translateX(250%); }
+          }
+
+          @keyframes float {
+              0%, 100% { transform: translateY(0); }
+              50% { transform: translateY(-8px); }
+          }
+
+          @keyframes pulseGlow {
+              0%, 100% { opacity: 0.6; }
+              50% { opacity: 1; }
+          }
+
+          @keyframes fadeIn {
+              from { opacity: 0; transform: scale(0.95); }
+              to { opacity: 1; transform: scale(1); }
+          }
+      </style>
+
+
   </head>
   <body>
-    <div id="root"></div>
+  <div id="initial-loader">
+      <div class="loader-content">
+          <div class="logo-wrapper">
+              <img src="/LOGO-ALGM.png" class="logo-img" alt="ALGM-Webs" />
+          </div>
+
+          <div class="brand-name">SISTEMA DE COMIDAS</div>
+
+          <div class="progress-container">
+              <div class="progress-bar"></div>
+          </div>
+      </div>
+  </div>
+  <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

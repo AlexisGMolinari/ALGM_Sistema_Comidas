@@ -7,6 +7,7 @@ import { MonthlyReport, DailyReport } from '../types';
 import { fetchMonthlyReport, fetchDailyReport } from '../contexts/api';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import FullScreenLoader from "../components/FullScreenLoader.tsx";
 
 
 
@@ -81,8 +82,8 @@ const ReportsPage: React.FC = () => {
         fetchReports();
     }, [selectedMonth]);
 
-    if (activeTab === 'daily' && !daily) return <div>Cargando reportes...</div>;
-    if (activeTab === 'monthly' && !monthly) return <div>Cargando reportes...</div>;
+    if (activeTab === 'daily' && !daily) return <FullScreenLoader />;
+    if (activeTab === 'monthly' && !monthly) return <FullScreenLoader />;
 
 
     // Reporte diario

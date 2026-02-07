@@ -8,6 +8,7 @@ import { CashRegister } from '../types';
 import { getCajaActual, createCaja, cierreCaja } from '../contexts/api';
 import { useToast } from '../components/common/SimpleToast';
 import {getApiErrorMessage} from "../utils/apiErrors.ts";
+import FullScreenLoader from "../components/FullScreenLoader.tsx";
 
 
 // Utility function to format currency
@@ -158,11 +159,7 @@ const CashRegisterPage: React.FC = () => {
 
 // Aquí empieza el renderizado: chequeo explícito para cashRegister
   if (loading) {
-    return (
-        <div className="flex justify-center items-center h-screen">
-          <p className="text-white text-lg">Cargando caja...</p>
-        </div>
-    );
+      return <FullScreenLoader />;
   }
 
   return (
@@ -193,14 +190,14 @@ const CashRegisterPage: React.FC = () => {
                 <div className="flex space-x-3">
                   <button
                     onClick={() => openMovementModal('in')}
-                    className="flex items-center px-3 py-1 bg-[#E6F9F7] text-[#2EC4B6] rounded-lg text-sm font-medium hover:bg-[#D1F5F2]"
+                    className="flex items-center px-4 py-3 bg-[#E6F9F7] text-[#2EC4B6] rounded-lg text-sm font-medium hover:bg-[#D1F5F2]"
                   >
                     <PlusCircle size={16} className="mr-1" />
                     Ingreso
                   </button>
                   <button
                     onClick={() => openMovementModal('out')}
-                    className="flex items-center px-3 py-1 bg-[#FFEDE5] text-[#FF6B35] rounded-lg text-sm font-medium hover:bg-[#FFE0D1]"
+                    className="flex items-center px-4 py-3 bg-[#FFEDE5] text-[#FF6B35] rounded-lg text-sm font-medium hover:bg-[#FFE0D1]"
                   >
                     <MinusCircle size={16} className="mr-1" />
                     Egreso

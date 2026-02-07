@@ -16,20 +16,33 @@ import SuperAdmin from './pages/SuperAdmin';
 import SuperAdminEmpresas from './pages/SuperAdminEmpresa';
 import SuperAdminEmpresaUsuarios from './pages/SuperAdminEmpresaUsuarios';
 import SuperAdminLocalidades from "./pages/SuperAdminLocalidades.tsx";
+import FullScreenLoader from './components/FullScreenLoader';
+
 
 import './App.css';
 
 // Protected route component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user } = useAuth();
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
-  return <>{children}</>;
+    const { user, loading } = useAuth();
+
+    if (loading) {
+        return null;
+    }
+
+    if (!user) {
+        return <Navigate to="/login" replace />;
+    }
+
+    return <>{children}</>;
 };
 
+
 const SuperAdminRoute = ({ children }: { children: React.ReactNode }) => {
-    const { user } = useAuth();
+    const { user, loading } = useAuth();
+
+    if (loading) {
+        return <FullScreenLoader />;
+    }
 
     if (!user) {
         return <Navigate to="/login" replace />;
@@ -43,6 +56,8 @@ const SuperAdminRoute = ({ children }: { children: React.ReactNode }) => {
 
     return <>{children}</>;
 };
+
+
 
 
 // Admin route component

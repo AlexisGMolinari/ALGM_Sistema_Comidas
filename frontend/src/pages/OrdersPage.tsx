@@ -4,13 +4,16 @@ import React, { useState, useEffect } from 'react';
 import {
     Plus, Search, ShoppingCart, Check, Clock, X, Filter, ChevronDown, DollarSign, Smartphone, Printer,// Printer
 } from 'lucide-react';
-import { fetchPedidos, fetchPedidoById, updatePedido, fetchProductosByCategoria, createPedido, uploadComprobanteImage,
-  cancelPedido, completeOrder, combos } from "../contexts/api.ts";
+import {
+    fetchPedidos, fetchPedidoById, updatePedido, fetchProductosByCategoria, createPedido, uploadComprobanteImage,
+    cancelPedido, completeOrder, combos, getCajaActual
+} from "../contexts/api.ts";
 import { Order, Product } from '../types';
 import { Edit } from 'lucide-react';
 import useAuth from "../hooks/useAuth.ts";
 import { useToast } from '../components/common/SimpleToast';
 import { getApiErrorMessage } from "../utils/apiErrors";
+import {Link} from "react-router-dom";
 
 
 
@@ -75,6 +78,8 @@ const OrdersPage: React.FC = () => {
   const [splitPayment, setSplitPayment] = useState<SplitPayment>({ cash: 0, transfer: 0 });
   const [splitTransferImageFile, setSplitTransferImageFile] = useState<File | null>(null);
   const [splitTransferImagePreview, setSplitTransferImagePreview] = useState("");
+    const [cajaAbierta, setCajaAbierta] = useState<boolean>(true);
+    const [loadingCaja, setLoadingCaja] = useState<boolean>(true);
 
 
     const { user } = useAuth();
@@ -94,7 +99,27 @@ const OrdersPage: React.FC = () => {
     loadOrders();
   }, []);
 
-  useEffect(() => {
+    useEffect(() => {
+        const checkCaja = async () => {
+            try {
+                setLoadingCaja(true);
+
+                const caja = await getCajaActual(); // 👈 tu endpoint real acá
+
+                setCajaAbierta(caja?.isOpen === true);
+            } catch (error) {
+                setCajaAbierta(false);
+                showToast(getApiErrorMessage(error,'Hubo un error para obtener la caja actual.'), 'info');
+            } finally {
+                setLoadingCaja(false);
+            }
+        };
+
+        checkCaja();
+    }, []);
+
+
+    useEffect(() => {
     const categoriaMap: Record<typeof selectedCategory, number> = {
       food: 1,
       drinks: 2,
@@ -861,8 +886,8 @@ const OrdersPage: React.FC = () => {
                     <div className="p-5 border-b border-gray-200">
                         <div className="flex flex-col md:flex-row justify-between space-y-4 md:space-y-0">
                             <div className="relative max-w-md">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <Search size={18} className="text-gray-400"/>
+                                <div className="absolute pl-2 flex items-center pointer-events-none">
+                                    <Search size={19} className="text-gray-400"/>
                                 </div>
                                 <input
                                     type="text"
@@ -939,7 +964,36 @@ const OrdersPage: React.FC = () => {
                     </div>
 
                     <div className="overflow-x-auto">
-                        {filteredOrders.length > 0 ? (
+                        {/* 🔄 Cargando estado de caja */}
+                        {loadingCaja ? (
+                            <div className="text-center py-10 text-gray-400">
+                                Verificando estado de caja...
+                            </div>
+
+                        ) : !cajaAbierta ? (
+
+                            /* 🔒 CAJA CERRADA */
+                            <div className="text-center py-16">
+                                <ShoppingCart size={48} className="mx-auto text-gray-400" />
+
+                                <h3 className="mt-4 text-lg font-semibold text-gray-200">
+                                    Caja cerrada
+                                </h3>
+
+                                <p className="mt-2 text-sm text-gray-300">
+                                    Para comenzar a tomar pedidos, primero debes abrir una caja.
+                                </p>
+
+                                <div className="mt-6">
+                                    <Link to="/cash-register">
+                                        <button className="px-6 py-3 bg-[#FF6B35] hover:bg-[#D6492C] text-white rounded-lg font-medium transition">
+                                            Abrir Caja
+                                        </button>
+                                    </Link>
+                                </div>
+                            </div>
+
+                        ) : filteredOrders.length > 0 ? (
                             <table className="min-w-full divide-y divide-gray-200">
                                 <thead className="bg-gray-50">
                                 <tr>
@@ -1110,10 +1164,21 @@ const OrdersPage: React.FC = () => {
                                 </tbody>
                             </table>
                         ) : (
+                            /* 📭 NO HAY PEDIDOS (PERO CAJA ABIERTA) */
                             <div className="text-center py-10">
                                 <ShoppingCart size={48} className="mx-auto text-gray-400" />
-                                <h3 className="mt-4 text-lg font-medium text-white">No hay pedidos</h3>
-                                <p className="mt-1 text-sm text-white">No se encontraron pedidos con los filtros seleccionados.</p>
+
+                                <h3 className="mt-4 text-lg font-medium text-white">
+                                    No hay pedidos
+                                </h3>
+
+                                <p className="mt-2 text-sm text-gray-300">
+                                    Aún no se registraron pedidos en la caja actual.
+                                </p>
+
+                                <p className="mt-1 text-sm text-gray-200">
+                                    Si aplicaste filtros, puede que no haya coincidencias.
+                                </p>
                             </div>
                         )}
                     </div>
