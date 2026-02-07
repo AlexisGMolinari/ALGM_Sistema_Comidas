@@ -152,7 +152,7 @@ class AdminEmpresasController extends AbstractController
     #[Route('/localidades', name: 'getall_localidad', methods: ["GET"])]
     public function getAllLocalidades(LocalidadRepository $localidadRepo): JsonResponse
     {
-        $result = $localidadRepo->getall(true, true, true);
+        $result = $localidadRepo->getall(false, true, true);
         return $this->json($result);
     }
 
@@ -205,7 +205,7 @@ class AdminEmpresasController extends AbstractController
                                   LocalidadRepository $repositoryLocalidad): JsonResponse
     {
         $postValues = $requestValidator->getRestBody();
-        $typeLocalidad->controloRegistro($postValues, 0);
+        $typeLocalidad->controloRegistro($postValues, $id);
         $repositoryLocalidad->updateRegistro($postValues, $id);
         return $this->json([]);
     }
