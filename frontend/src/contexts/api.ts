@@ -577,6 +577,18 @@ export const superAdmin = {
     getLocalidades: async () =>
         api.get('/administrador/empresas/localidades').then(res => res.data),
 
+    getLocalidadesById: async (id: number) =>
+        api.get(`/administrador/empresas/localidades/${id}`).then(res => res.data),
+
+    createLocalidad: async (payload: any) =>
+        api.post('/administrador/empresas/localidades/alta', payload).then(res => res.data),
+
+    updateLocalidad: async (id: number, payload: any) =>
+        api.put(`/administrador/empresas/localidades/editar/${id}`, payload).then(res => res.data),
+
+    deleteLocalidad: async (id: number) =>
+        api.delete(`/administrador/empresas/localidades/eliminar/${id}`).then(res => res.data),
+
     // USUARIOS
     createUsuario: async (payload: any) =>
         api.post('/usuarios/', payload).then(res => res.data),

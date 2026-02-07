@@ -728,7 +728,7 @@ const OrdersPage: React.FC = () => {
         }
 
         try {
-            await createPedido(
+            const newOrder = await createPedido(
                 customerName,
                 1, // métod por defecto, o podrías dejar "undefined" si lo maneja el backend
                 cartTotal,
@@ -739,7 +739,7 @@ const OrdersPage: React.FC = () => {
             );
             // 🔹 Nuevo: imprimir ticket de cocina
             printTicket(
-                { id: "TEMP", customerName, total: cartTotal } as any,
+                { id: newOrder.id, customerName, total: cartTotal } as any,
                 cart,
                 "kitchen",
                 orderNote
@@ -776,6 +776,7 @@ const OrdersPage: React.FC = () => {
             h1, h2, h3 { text-align: center; margin: 4px 0; }
             table { width: 100%; border-collapse: collapse; font-size: 12px; }
             td { padding: 4px 0; }
+            .price { font-size: 10px; color: #555; margin-top: 2px; }
             .qty { font-size: 18px; font-weight: bold; text-align: right; }
             .total { font-size: 14px; font-weight: bold; text-align: right; margin-top: 6px; }
             .note { margin-top: 8px; font-size: 12px; white-space: pre-wrap; word-wrap: break-word; }
@@ -796,11 +797,14 @@ const OrdersPage: React.FC = () => {
 
         items.forEach(i => {
             html += `
-            <tr>
-                <td>${i.name}</td>
-                <td class="qty">x${i.quantity}</td>
-            </tr>
-        `;
+        <tr>
+            <td>
+                ${i.name}
+                ${type === "customer" ? `<div class="price">${formatCurrency(i.price)}</div>` : ""}
+            </td>
+            <td class="qty">x${i.quantity}</td>
+        </tr>
+    `;
         });
 
         html += "</table>";

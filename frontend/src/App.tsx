@@ -15,6 +15,7 @@ import Layout from './components/Layout';
 import SuperAdmin from './pages/SuperAdmin';
 import SuperAdminEmpresas from './pages/SuperAdminEmpresa';
 import SuperAdminEmpresaUsuarios from './pages/SuperAdminEmpresaUsuarios';
+import SuperAdminLocalidades from "./pages/SuperAdminLocalidades.tsx";
 
 import './App.css';
 
@@ -180,6 +181,16 @@ function App() {
                 }
             />
 
+            <Route
+                path="/superadmin/localidades"
+                element={
+                    <SuperAdminRoute>
+                        <Layout>
+                            <SuperAdminLocalidades />
+                        </Layout>
+                    </SuperAdminRoute>
+                }
+            />
 
 
         </Routes>

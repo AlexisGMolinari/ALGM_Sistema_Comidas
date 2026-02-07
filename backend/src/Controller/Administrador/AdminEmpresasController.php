@@ -156,6 +156,21 @@ class AdminEmpresasController extends AbstractController
         return $this->json($result);
     }
 
+    /**
+     * @param int $id
+     * @param LocalidadRepository $localidadRepo
+     * @return JsonResponse
+     * @throws Exception
+     */
+    #[Route('/localidades/{id}', name: 'get_localidad_by_id', requirements: ['id' => '\d+'], methods: ["GET"])]
+    public function getLocalidadById(int $id,
+                                      LocalidadRepository $localidadRepo): JsonResponse
+    {
+        $localidadRepo->checkIdExiste($id);
+        $result = $localidadRepo->getById($id);
+        return $this->json($result);
+    }
+
 
     /**
      * @param GetRequestValidator $requestValidator
@@ -175,7 +190,40 @@ class AdminEmpresasController extends AbstractController
         return $this->json([]);
     }
 
+    /**
+     * @param GetRequestValidator $requestValidator
+     * @param int $id
+     * @param LocalidadType $typeLocalidad
+     * @param LocalidadRepository $repositoryLocalidad
+     * @return JsonResponse
+     * @throws Exception
+     */
+    #[Route('/localidades/editar/{id}', name: 'edito_localidad', requirements: ['id' => '\d+'], methods: ["PUT"])]
+    public function editoLocalidad(GetRequestValidator $requestValidator,
+                                  int $id,
+                                  LocalidadType $typeLocalidad,
+                                  LocalidadRepository $repositoryLocalidad): JsonResponse
+    {
+        $postValues = $requestValidator->getRestBody();
+        $typeLocalidad->controloRegistro($postValues, 0);
+        $repositoryLocalidad->updateRegistro($postValues, $id);
+        return $this->json([]);
+    }
 
+    /**
+     * @param int $id
+     * @param LocalidadRepository $repositoryLocalidad
+     * @return JsonResponse
+     * @throws Exception
+     */
+    #[Route('/localidades/eliminar/{id}', name: 'elimino_localidad', requirements: ['id' => '\d+'], methods: ["PUT"])]
+    public function eliminoLocalidad(int $id,
+                                   LocalidadRepository $repositoryLocalidad): JsonResponse
+    {
+        $repositoryLocalidad->checkIdExiste($id);
+        $repositoryLocalidad->deleteRegistro($id);
+        return $this->json([]);
+    }
 
 
     // ------------------------------ LOCALIDADES

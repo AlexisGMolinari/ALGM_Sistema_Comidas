@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus, Building2, Users, Link2 } from 'lucide-react';
+import {Plus, Building2, Users, Link2, MapPin} from 'lucide-react';
 import { superAdmin } from "../contexts/api.ts";
 import {useToast} from "../components/common/SimpleToast.tsx";
 import { Link } from 'react-router-dom';
@@ -152,6 +152,13 @@ export default function SuperAdmin() {
                 >
                     <Building2 size={18} className="mr-2" />
                     Ver listado de empresas
+                </Link>
+                <Link
+                    to="/superadmin/localidades"
+                    className="inline-flex items-center px-4 py-2 bg-white text-gray-800 rounded-lg shadow hover:bg-gray-100 transition"
+                >
+                    <MapPin size={18} className="mr-2" />
+                    Ver listado de Localidades
                 </Link>
             </div>
 
