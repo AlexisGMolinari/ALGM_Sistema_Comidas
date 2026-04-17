@@ -1193,7 +1193,7 @@ const OrdersPage: React.FC = () => {
                                         </div>
                                     ))}
                                 </div>
-                                <table className="hidden sm:table min-w-full divide-y divide-gray-200">
+                                <table className="hidden md:table min-w-full divide-y divide-gray-200">
                                     <thead className="bg-gray-50">
                                     <tr>
                                         <th
