@@ -197,6 +197,17 @@ class TablasSimplesAbstract
     }
 
     /**
+     * @param array $registroValores
+     * @return int
+     * @throws Exception
+     */
+    public function create(array $registroValores): int
+    {
+        $this->connection->insert($this->nombreTabla, $registroValores);
+        return $this->connection->lastInsertId();
+    }
+
+    /**
      * Crea un
      * @param array $registroValores
      * @param int $idUsuario

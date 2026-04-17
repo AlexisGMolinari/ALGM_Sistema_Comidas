@@ -56,8 +56,14 @@ body {
 
 /* ========= ANIMACIONES ========= */
 @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
 }
 
 @keyframes slideInUp {
@@ -138,6 +144,10 @@ body {
 }
 .table-cell {
     @apply px-6 py-4 whitespace-nowrap text-sm text-gray-700;
+}
+
+.animate-fadeIn {
+    animation: fadeIn 0.2s ease-out;
 }
 
 /* ========= RESPONSIVE ========= */

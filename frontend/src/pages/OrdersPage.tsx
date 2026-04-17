@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import {
     fetchPedidos, fetchPedidoById, updatePedido, fetchProductosByCategoria, createPedido, uploadComprobanteImage,
-    cancelPedido, completeOrder, combos, getCajaActual
+    cancelPedido, completeOrder, combos, getCajaActual, configuracion
 } from "../contexts/api.ts";
 import { Order, Product } from '../types';
 import { Edit } from 'lucide-react';
@@ -14,6 +14,7 @@ import useAuth from "../hooks/useAuth.ts";
 import { useToast } from '../components/common/SimpleToast';
 import { getApiErrorMessage } from "../utils/apiErrors";
 import {Link} from "react-router-dom";
+import {ConfirmModal} from "../components/common/ConfirmModal.tsx";
 
 
 
@@ -80,8 +81,12 @@ const OrdersPage: React.FC = () => {
   const [splitTransferImagePreview, setSplitTransferImagePreview] = useState("");
     const [cajaAbierta, setCajaAbierta] = useState<boolean>(true);
     const [loadingCaja, setLoadingCaja] = useState<boolean>(true);
-
-
+    const [showConfigModal, setShowConfigModal] = useState(false);
+    const [config, setConfig] = useState({
+        imprime_ticket: 0,
+        formato_ticket: null as number | null
+    });
+    const [orderToCancel, setOrderToCancel] = useState<number | null>(null);
     const { user } = useAuth();
     const roles = user?.roles?.split(',').map(r => r.trim()) ?? [];
 
@@ -89,6 +94,14 @@ const OrdersPage: React.FC = () => {
         roles.includes('ROLE_ADMIN') ||
         roles.includes('ROLE_SUPERADMIN');
 
+    useEffect(() => {
+        configuracion.getConfig().then((data) => {
+            setConfig({
+                imprime_ticket: data.imprime_ticket ?? 0,
+                formato_ticket: data.formato_ticket ?? null
+            });
+        });
+    }, []);
 
     useEffect(() => {
     const loadOrders = async () => {
@@ -119,6 +132,8 @@ const OrdersPage: React.FC = () => {
     }, []);
 
 
+
+
     useEffect(() => {
     const categoriaMap: Record<typeof selectedCategory, number> = {
       food: 1,
@@ -147,7 +162,7 @@ const OrdersPage: React.FC = () => {
         const metodoPago = paymentMethod; // "cash" | "transfer" | "mixed"
         const metodoPagoId = mapPaymentMethodToId(metodoPago);
 
-        // 👉 totales según método
+        // 👉 totales según metodo
         const totalCash =
             metodoPago === "cash"
                 ? selectedOrderForComprobante.total
@@ -529,19 +544,23 @@ const OrdersPage: React.FC = () => {
     };
 
 
-    const handleCancelOrder = async (orderId: string) => {
-    const confirm = window.confirm('¿Estás seguro de que querés anular este pedido?');
-    if (!confirm) return;
+    const handleCancelOrder = (orderId: string) => {
+        setOrderToCancel(Number(orderId));
+    };
 
-    try {
-      await cancelPedido(Number(orderId));
-      const updatedOrders = await fetchPedidos();
-      setOrders(updatedOrders);
-    } catch (error) {
-      console.error('Error al anular el pedido:', error);
-        showToast(getApiErrorMessage(error,'Hubo un error al anular el pedido.'), 'error');
-    }
-  };
+    const confirmCancelOrder = async () => {
+        if (!orderToCancel) return;
+
+        try {
+            await cancelPedido(orderToCancel);
+            const updatedOrders = await fetchPedidos();
+            setOrders(updatedOrders);
+        } catch (error) {
+            showToast(getApiErrorMessage(error,'Hubo un error al anular el pedido.'), 'error');
+        } finally {
+            setOrderToCancel(null);
+        }
+    };
 
 
   // Function to add item to cart
@@ -741,6 +760,49 @@ const OrdersPage: React.FC = () => {
             default: return 'Todos';
         }
     };
+
+    const handleUpdateOrder = async () => {
+        if (!editingOrder) return;
+
+        if (cart.length === 0) {
+            showToast("El carrito está vacío", "info");
+            return;
+        }
+
+        if (!customerName.trim()) {
+            showToast("Ingrese el nombre del cliente", "warning");
+            return;
+        }
+
+        try {
+            await updatePedido(
+                Number(editingOrder.id), // 🔥 usamos TU objeto
+                customerName,
+                paymentMethod,
+                cart
+            );
+
+            showToast("Pedido actualizado correctamente", "success");
+
+            // 🔥 RESET (CLAVE)
+            setEditingOrder(null);
+            setCart([]);
+            setCustomerName("");
+            setPaymentMethod("cash");
+            setActiveTab("orderList"); // 👈 opcional pero recomendable
+
+            const updatedOrders = await fetchPedidos();
+            setOrders(updatedOrders);
+
+        } catch (error) {
+            console.error("Error al actualizar pedido:", error);
+            showToast(
+                getApiErrorMessage(error, "Error al actualizar pedido"),
+                "error"
+            );
+        }
+    };
+
     const handleCreateOrderWithoutPayment = async () => {
         if (cart.length === 0) {
             showToast("El carrito está vacío", "info");
@@ -788,25 +850,51 @@ const OrdersPage: React.FC = () => {
     };
 
     // Lógica del Ticket
-    const printTicket = (order: Order, items: any[], type: "kitchen" | "customer", note?: string) => {
+    const printTicket = (
+        order: Order,
+        items: any[],
+        type: "kitchen" | "customer",
+        note?: string
+    ) => {
+        // 🔴 1. VALIDACIÓN GLOBAL
+        if (config.imprime_ticket !== 1) return;
+
+        // 🔴 2. VALIDAR FORMATO
+        if (!config.formato_ticket) {
+            console.warn("Formato de ticket no definido");
+            return;
+        }
+
+        const is58 = config.formato_ticket === 1;
+
         const printWindow = window.open("", "_blank", "width=400,height=600");
         if (!printWindow) return;
 
         const now = new Date();
         const formattedDate = now.toLocaleString("es-AR");
 
+        // 🔴 3. ESTILOS DINÁMICOS
         const style = `
         <style>
-            body { font-family: monospace; width: 58mm; margin: 0; padding: 8px; }
+            body { 
+                font-family: monospace; 
+                width: ${is58 ? "58mm" : "80mm"}; 
+                margin: 0; 
+                padding: 8px; 
+            }
             h1, h2, h3 { text-align: center; margin: 4px 0; }
-            table { width: 100%; border-collapse: collapse; font-size: 12px; }
+            table { width: 100%; border-collapse: collapse; font-size: ${is58 ? "12px" : "14px"}; }
             td { padding: 4px 0; }
-            .price { font-size: 10px; color: #555; margin-top: 2px; }
-            .qty { font-size: 18px; font-weight: bold; text-align: right; }
-            .total { font-size: 14px; font-weight: bold; text-align: right; margin-top: 6px; }
-            .note { margin-top: 8px; font-size: 12px; white-space: pre-wrap; word-wrap: break-word; }
-            .thankyou { text-align: center; margin-top: 12px; font-size: 12px; }
-            @media print { @page { size: 58mm auto; margin: 0; } body { margin: 0; } }
+            .price { font-size: ${is58 ? "10px" : "12px"}; color: #555; margin-top: 2px; }
+            .qty { font-size: ${is58 ? "18px" : "20px"}; font-weight: bold; text-align: right; }
+            .total { font-size: ${is58 ? "14px" : "16px"}; font-weight: bold; text-align: right; margin-top: 6px; }
+            .note { margin-top: 8px; font-size: ${is58 ? "12px" : "14px"}; white-space: pre-wrap; word-wrap: break-word; }
+            .thankyou { text-align: center; margin-top: 12px; font-size: ${is58 ? "12px" : "14px"}; }
+
+            @media print { 
+                @page { size: ${is58 ? "58mm" : "80mm"} auto; margin: 0; } 
+                body { margin: 0; } 
+            }
         </style>
     `;
 
@@ -829,12 +917,12 @@ const OrdersPage: React.FC = () => {
             </td>
             <td class="qty">x${i.quantity}</td>
         </tr>
-    `;
+        `;
         });
 
         html += "</table>";
 
-        // 🔹 Mostrar observaciones sólo en el ticket de cocina
+        // 🔹 Observaciones
         if (type === "kitchen" && note && note.trim() !== "") {
             html += `<div class="note"><strong>OBSERVACIONES:</strong><br>${note}</div>`;
         }
@@ -848,6 +936,7 @@ const OrdersPage: React.FC = () => {
         }
 
         html += "</body></html>";
+
         printWindow.document.write(html);
         printWindow.document.close();
         printWindow.print();
@@ -860,6 +949,12 @@ const OrdersPage: React.FC = () => {
             <div className="flex flex-col md:flex-row md:items-center md:justify-between">
                 <h1 className="text-2xl font-bold text-white">Gestión de Pedidos</h1>
                 <div className="mt-4 md:mt-0 flex flex-col sm:flex-row sm:space-x-3 space-y-2 sm:space-y-0">
+                    <button
+                        onClick={() => setShowConfigModal(true)}
+                        className="btn bg-cyan-400 text-white border border-black"
+                    >
+                        🖨️ Impresora
+                    </button>
                     <button
                         onClick={() => setActiveTab("orderList")}
                         className={`btn ${
@@ -994,175 +1089,286 @@ const OrdersPage: React.FC = () => {
                             </div>
 
                         ) : filteredOrders.length > 0 ? (
-                            <table className="min-w-full divide-y divide-gray-200">
-                                <thead className="bg-gray-50">
-                                <tr>
-                                    <th
-                                        scope="col"
-                                        onClick={() => handleSort("id")}
-                                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                                    >
-                                        Pedido #{sortConfig?.key === "id" ? (sortConfig.direction === "asc" ? " 🔼" : " 🔽") : null}
-                                    </th>
-                                    <th
-                                        scope="col"
-                                        onClick={() => handleSort("customerName")}
-                                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                                    >
-                                        Cliente
-                                        {sortConfig?.key === "customerName" ? (sortConfig.direction === "asc" ? " 🔼" : " 🔽") : null}
-                                    </th>
-                                    <th
-                                        scope="col"
-                                        onClick={() => handleSort("status")}
-                                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                                    >
-                                        Estado
-                                        {sortConfig?.key === "status" ? (sortConfig.direction === "asc" ? " 🔼" : " 🔽") : null}
-                                    </th>
-                                    <th
-                                        scope="col"
-                                        onClick={() => handleSort("total")}
-                                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                                    >
-                                        Total
-                                        {sortConfig?.key === "total" ? (sortConfig.direction === "asc" ? " 🔼" : " 🔽") : null}
-                                    </th>
-                                    <th
-                                        scope="col"
-                                        onClick={() => handleSort("createdAt")}
-                                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                                    >
-                                        Hora
-                                        {sortConfig?.key === "createdAt" ? (sortConfig.direction === "asc" ? " 🔼" : " 🔽") : null}
-                                    </th>
-                                    <th
-                                        scope="col"
-                                        onClick={() => handleSort("paymentMethod")}
-                                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                                    >
-                                        Pago
-                                        {sortConfig?.key === "paymentMethod" ? (sortConfig.direction === "asc" ? " 🔼" : " 🔽") : null}
-                                    </th>
-                                    <th
-                                        scope="col"
-                                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                                    >
-                                        Acciones
-                                    </th>
-                                </tr>
-                                </thead>
-                                <tbody className="bg-white divide-y divide-gray-200">
-                                {sortedOrders.map((order) => (
-                                    <tr key={order.id} className="hover:bg-gray-50">
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm font-medium text-gray-900">#{order.id}</div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm text-gray-900">{order.customerName}</div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                order.status === "completado"
-                                    ? "bg-green-100 text-green-800"
-                                    : order.status === "anulado"
-                                        ? "bg-red-100 text-red-800"
-                                        : order.status === "eliminado"
-                                            ? "bg-gray-200 text-gray-600 line-through"
-                                            : "bg-yellow-100 text-yellow-800" // pendiente
-                            }`}
-                        >
-                          {order.status === "completado" && <Check size={12} className="mr-1" />}
-                            {order.status === "anulado" && <X size={12} className="mr-1" />}
-                            {order.status === "eliminado" && <X size={12} className="mr-1" />}
-                            {order.status === "pendiente" && <Clock size={12} className="mr-1" />}
+                            <>
+                                {/* 📱 MOBILE VIEW */}
+                                <div className="grid grid-cols-1 gap-4 sm:hidden">
+                                    {sortedOrders.map((order) => (
+                                        <div key={order.id} className="bg-white rounded-xl shadow-md p-4 space-y-3">
 
-                            {order.status === "completado"
-                                ? "Completado"
-                                : order.status === "anulado"
-                                    ? "Anulado"
-                                    : order.status === "eliminado"
-                                        ? "Eliminado"
-                                        : "Pendiente"}
-                        </span>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm text-gray-900 font-medium">{formatCurrency(order.total)}</div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm text-gray-500">
-                                                {order.createdAt.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })}
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="flex items-center text-sm text-gray-500">
-                                                {order.paymentMethod === "cash" && <DollarSign size={16} className="mr-1 text-green-500" />}
-                                                {order.paymentMethod === "transfer" && <Smartphone size={16} className="mr-1 text-purple-500" />}
-                                                {order.paymentMethod === "mixed" && (
-                                                    <>
-                                                        <DollarSign size={16} className="mr-1 text-green-500" />
-                                                        <Smartphone size={16} className="mr-1 text-purple-500" />
-                                                    </>
-                                                )}
-                                                <span className="capitalize">
-                                                    {order.paymentMethod === "cash"
-                                                        ? "Efectivo"
-                                                        : order.paymentMethod === "transfer"
-                                                            ? "Transferencia"
-                                                            : order.paymentMethod === "mixed"
-                                                                ? "Mixto"
-                                                                : order.paymentMethod
-                                                    }
+                                            {/* HEADER */}
+                                            <div className="flex justify-between items-center">
+                                                <span className="font-bold text-lg text-gray-800">#{order.id}</span>
+
+                                                <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                                                    order.status === "completado"
+                                                        ? "bg-green-100 text-green-800"
+                                                        : order.status === "anulado"
+                                                            ? "bg-red-100 text-red-800"
+                                                            : order.status === "eliminado"
+                                                                ? "bg-gray-200 text-gray-600"
+                                                                : "bg-yellow-100 text-yellow-800"
+                                                }`}>
+                                                    {order.status}
                                                 </span>
                                             </div>
-                                        </td>
 
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                                            {order.status === "pendiente" && (
-                                                <button
-                                                    onClick={() => handleCompleteClick(order)}
-                                                    className="text-[#3BB273] hover:text-[#2E9D60]"
-                                                    title="Dividir y completar pedido"
-                                                >
-                                                    <Check size={18} />
-                                                </button>
-                                            )}
-                                            <button
-                                                onClick={() => handleEditOrder(order.id)}
-                                                className="text-blue-500 hover:text-blue-700"
-                                                title="Editar pedido"
-                                            >
-                                                <Edit size={18} />
-                                            </button>
-                                            <button
-                                                onClick={() => {
-                                                    fetchPedidoById(Number(order.id)).then(data => {
-                                                        if (data?.items) {
-                                                            printTicket(order, data.items, "customer");
-                                                        } else {
-                                                            showToast("No se pudieron obtener los productos del pedido.", "error");
+                                            {/* INFO */}
+                                            <div className="text-sm text-gray-700 space-y-1">
+                                                <p><strong>Cliente:</strong> {order.customerName}</p>
+                                                <p><strong>Total:</strong> {formatCurrency(order.total)}</p>
+                                                <p><strong>Hora:</strong> {order.createdAt.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })}</p>
+                                                <div className="flex items-center text-sm text-gray-700">
+                                                    <strong className="mr-1">Pago:</strong>
+                                                        {order.paymentMethod === "cash" && (
+                                                            <DollarSign size={16} className="mx-1 text-green-500" />
+                                                        )}
+                                                        {order.paymentMethod === "transfer" && (
+                                                            <Smartphone size={16} className="mx-1 text-purple-500" />
+                                                        )}
+                                                        {order.paymentMethod === "mixed" && (
+                                                            <>
+                                                                <DollarSign size={16} className="mx-1 text-green-500" />
+                                                                <Smartphone size={16} className="mx-1 text-purple-500" />
+                                                            </>
+                                                        )}
+                                                    <span className="ml-1">
+                                                        {order.paymentMethod === "cash"
+                                                            ? "Efectivo"
+                                                            : order.paymentMethod === "transfer"
+                                                                ? "Transferencia"
+                                                                : order.paymentMethod === "mixed"
+                                                                    ? "Mixto"
+                                                                    : order.paymentMethod
                                                         }
-                                                    });
-                                                }}
-                                                className="text-[#2EC4B6] hover:text-[#23A399]"
-                                                title="Imprimir ticket"
-                                            >
-                                                <Printer size={18}/>
-                                            </button>
+                                                    </span>
+                                                </div>
+                                            </div>
 
-                                            <button
-                                                onClick={() => handleCancelOrder(order.id)}
-                                                className="text-red-500 hover:text-red-700"
-                                                title="Anular pedido"
-                                            >
-                                                <X size={18} />
-                                            </button>
-                                        </td>
+                                            {/* ACCIONES GRANDES */}
+                                            <div className="grid grid-cols-2 gap-2 pt-2">
+
+                                                {order.status === "pendiente" && (
+                                                    <button
+                                                        onClick={() => handleCompleteClick(order)}
+                                                        className="bg-green-500 text-white py-2 rounded-lg text-sm"
+                                                    >
+                                                        ✔
+                                                    </button>
+                                                )}
+
+                                                {order.status !== "anulado" && order.status !== "eliminado" && (
+                                                    <button
+                                                        onClick={() => handleEditOrder(order.id)}
+                                                        className="bg-blue-500 text-white py-2 rounded-lg text-sm"
+                                                    >
+                                                        ✏️
+                                                    </button>
+                                                )}
+
+                                                {config.imprime_ticket === 1 && (
+                                                    <button
+                                                        onClick={() => {
+                                                            fetchPedidoById(Number(order.id)).then(data => {
+                                                                if (data?.items) {
+                                                                    printTicket(order, data.items, "customer");
+                                                                } else {
+                                                                    showToast("No se pudieron obtener los productos del pedido.", "error");
+                                                                }
+                                                            });
+                                                        }}
+                                                        className="bg-[#2EC4B6] text-white py-2 rounded-lg text-sm"
+                                                    >
+                                                        🖨️
+                                                    </button>
+                                                )}
+                                                {order.status !== "anulado" && order.status !== "eliminado" && (
+                                                    <button
+                                                        onClick={() => handleCancelOrder(order.id)}
+                                                        className="bg-red-500 text-white py-2 rounded-lg text-sm col-span-2"
+                                                    >
+                                                        Anular
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                                <table className="hidden sm:table min-w-full divide-y divide-gray-200">
+                                    <thead className="bg-gray-50">
+                                    <tr>
+                                        <th
+                                            scope="col"
+                                            onClick={() => handleSort("id")}
+                                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                        >
+                                            Pedido #{sortConfig?.key === "id" ? (sortConfig.direction === "asc" ? " 🔼" : " 🔽") : null}
+                                        </th>
+                                        <th
+                                            scope="col"
+                                            onClick={() => handleSort("customerName")}
+                                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                        >
+                                            Cliente
+                                            {sortConfig?.key === "customerName" ? (sortConfig.direction === "asc" ? " 🔼" : " 🔽") : null}
+                                        </th>
+                                        <th
+                                            scope="col"
+                                            onClick={() => handleSort("status")}
+                                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                        >
+                                            Estado
+                                            {sortConfig?.key === "status" ? (sortConfig.direction === "asc" ? " 🔼" : " 🔽") : null}
+                                        </th>
+                                        <th
+                                            scope="col"
+                                            onClick={() => handleSort("total")}
+                                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                        >
+                                            Total
+                                            {sortConfig?.key === "total" ? (sortConfig.direction === "asc" ? " 🔼" : " 🔽") : null}
+                                        </th>
+                                        <th
+                                            scope="col"
+                                            onClick={() => handleSort("createdAt")}
+                                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                        >
+                                            Hora
+                                            {sortConfig?.key === "createdAt" ? (sortConfig.direction === "asc" ? " 🔼" : " 🔽") : null}
+                                        </th>
+                                        <th
+                                            scope="col"
+                                            onClick={() => handleSort("paymentMethod")}
+                                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                        >
+                                            Pago
+                                            {sortConfig?.key === "paymentMethod" ? (sortConfig.direction === "asc" ? " 🔼" : " 🔽") : null}
+                                        </th>
+                                        <th
+                                            scope="col"
+                                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                        >
+                                            Acciones
+                                        </th>
                                     </tr>
-                                ))}
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody className="bg-white divide-y divide-gray-200">
+                                    {sortedOrders.map((order) => (
+                                        <tr key={order.id} className="hover:bg-gray-50">
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="text-sm font-medium text-gray-900">#{order.id}</div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="text-sm text-gray-900">{order.customerName}</div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <span
+                                                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                                        order.status === "completado"
+                                                            ? "bg-green-100 text-green-800"
+                                                            : order.status === "anulado"
+                                                                ? "bg-red-100 text-red-800"
+                                                                : order.status === "eliminado"
+                                                                    ? "bg-gray-200 text-gray-600 line-through"
+                                                                    : "bg-yellow-100 text-yellow-800" // pendiente
+                                                    }`}
+                                                >
+                                                  {order.status === "completado" && <Check size={12} className="mr-1" />}
+                                                    {order.status === "anulado" && <X size={12} className="mr-1" />}
+                                                    {order.status === "eliminado" && <X size={12} className="mr-1" />}
+                                                    {order.status === "pendiente" && <Clock size={12} className="mr-1" />}
+
+                                                    {order.status === "completado"
+                                                        ? "Completado"
+                                                        : order.status === "anulado"
+                                                            ? "Anulado"
+                                                            : order.status === "eliminado"
+                                                                ? "Eliminado"
+                                                                : "Pendiente"}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="text-sm text-gray-900 font-medium">{formatCurrency(order.total)}</div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="text-sm text-gray-500">
+                                                    {order.createdAt.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })}
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="flex items-center text-sm text-gray-500">
+                                                    {order.paymentMethod === "cash" && <DollarSign size={16} className="mr-1 text-green-500" />}
+                                                    {order.paymentMethod === "transfer" && <Smartphone size={16} className="mr-1 text-purple-500" />}
+                                                    {order.paymentMethod === "mixed" && (
+                                                        <>
+                                                            <DollarSign size={16} className="mr-1 text-green-500" />
+                                                            <Smartphone size={16} className="mr-1 text-purple-500" />
+                                                        </>
+                                                    )}
+                                                    <span className="capitalize">
+                                                        {order.paymentMethod === "cash"
+                                                            ? "Efectivo"
+                                                            : order.paymentMethod === "transfer"
+                                                                ? "Transferencia"
+                                                                : order.paymentMethod === "mixed"
+                                                                    ? "Mixto"
+                                                                    : order.paymentMethod
+                                                        }
+                                                    </span>
+                                                </div>
+                                            </td>
+
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                                                {order.status === "pendiente" && (
+                                                    <button
+                                                        onClick={() => handleCompleteClick(order)}
+                                                        className="text-[#3BB273] hover:text-[#2E9D60]"
+                                                        title="Dividir y completar pedido"
+                                                    >
+                                                        <Check size={18} />
+                                                    </button>
+                                                )}
+                                                {order.status !== "anulado" && order.status !== "eliminado" && (
+                                                    <button
+                                                        onClick={() => handleEditOrder(order.id)}
+                                                        className="text-blue-500 hover:text-blue-700"
+                                                        title="Editar pedido"
+                                                    >
+                                                        <Edit size={18} />
+                                                    </button>
+                                                )}
+                                                {config.imprime_ticket === 1 && (
+                                                    <button
+                                                        onClick={() => {
+                                                            fetchPedidoById(Number(order.id)).then(data => {
+                                                                if (data?.items) {
+                                                                    printTicket(order, data.items, "customer");
+                                                                } else {
+                                                                    showToast("No se pudieron obtener los productos del pedido.", "error");
+                                                                }
+                                                            });
+                                                        }}
+                                                        className="text-[#2EC4B6] hover:text-[#23A399]"
+                                                        title="Imprimir ticket"
+                                                    >
+                                                        <Printer size={18}/>
+                                                    </button>
+                                                )}
+                                                {order.status !== "anulado" && order.status !== "eliminado" && (
+                                                    <button
+                                                        onClick={() => handleCancelOrder(order.id)}
+                                                        className="text-red-500 hover:text-red-700"
+                                                        title="Anular pedido"
+                                                    >
+                                                        <X size={18} />
+                                                    </button>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    </tbody>
+                                </table>
+                            </>
+
                         ) : (
                             /* 📭 NO HAY PEDIDOS (PERO CAJA ABIERTA) */
                             <div className="text-center py-10">
@@ -1183,10 +1389,17 @@ const OrdersPage: React.FC = () => {
                         )}
                     </div>
                 </div>
-            ) : (
+
+                            ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div className="lg:col-span-2">
                         <div className="bg-white rounded-xl shadow-md overflow-hidden">
+                            {editingOrder && (
+                                <div className="px-5 py-2 bg-yellow-100 text-yellow-800 text-sm font-medium">
+                                    Editando pedido #{editingOrder.id}
+                                </div>
+                            )}
+
                             <div className="px-5 py-4 border-b border-gray-200">
                                 <div className="flex items-center space-x-4">
                                     <button
@@ -1254,6 +1467,11 @@ const OrdersPage: React.FC = () => {
                     </div>
 
                     <div className="bg-white rounded-xl shadow-md overflow-hidden h-fit">
+                        {editingOrder && (
+                            <div className="px-5 py-2 bg-yellow-100 text-yellow-800 text-sm font-medium">
+                                Editando pedido #{editingOrder.id}
+                            </div>
+                        )}
                         <div className="px-5 py-4 border-b border-gray-200">
                             <h2 className="text-lg font-semibold text-gray-800">Detalle del Pedido</h2>
                         </div>
@@ -1373,7 +1591,7 @@ const OrdersPage: React.FC = () => {
 
                             <div className="mt-6">
                                 <button
-                                    onClick={handleCreateOrderWithoutPayment}
+                                    onClick={editingOrder ? handleUpdateOrder : handleCreateOrderWithoutPayment}
                                     disabled={cart.length === 0 || !customerName.trim()}
                                     className={`w-full py-3 px-4 rounded-lg font-medium text-white ${
                                         cart.length === 0 || !customerName.trim()
@@ -1381,7 +1599,7 @@ const OrdersPage: React.FC = () => {
                                             : "bg-[#FF6B35] hover:bg-[#D6492C]"
                                     }`}
                                 >
-                                    Finalizar Pedido
+                                    {editingOrder ? "Actualizar Pedido" : "Finalizar Pedido"}
                                 </button>
                             </div>
 
@@ -1928,6 +2146,138 @@ const OrdersPage: React.FC = () => {
                     </div>
                 </div>
             )}
+            {showConfigModal && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+                    <div className="bg-white text-gray-800 rounded-2xl shadow-xl w-full max-w-md p-6 animate-fadeIn">
+
+                        {/* HEADER */}
+                        <div className="flex items-center justify-between mb-5">
+                            <h2 className="text-xl font-semibold">
+                                🖨️ Configuración de Impresión
+                            </h2>
+                            <button
+                                onClick={() => setShowConfigModal(false)}
+                                className="text-gray-400 hover:text-gray-600 text-lg"
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        {/* SWITCH */}
+                        <div className="flex items-center justify-between mb-6 p-3 rounded-lg border">
+                            <span className="font-medium">Imprimir tickets</span>
+
+                            <label className="relative inline-flex items-center cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    className="sr-only peer"
+                                    checked={config.imprime_ticket === 1}
+                                    onChange={(e) => {
+                                        const value = e.target.checked ? 1 : 0;
+                                        setConfig({
+                                            imprime_ticket: value,
+                                            formato_ticket: value === 0 ? null : config.formato_ticket
+                                        });
+                                    }}
+                                />
+                                <div className="w-11 h-6 bg-gray-300 rounded-full peer peer-checked:bg-[#FF6B35] transition"></div>
+                                <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition peer-checked:translate-x-5"></div>
+                            </label>
+                        </div>
+
+                        {/* FORMATO */}
+                        <div className={`mb-6 p-3 rounded-lg border ${config.imprime_ticket === 0 ? "opacity-50" : ""}`}>
+                            <p className="mb-3 font-medium">Formato del ticket</p>
+
+                            <div className="space-y-2">
+                                <label className="flex items-center justify-between p-2 rounded-md hover:bg-gray-100 cursor-pointer">
+                                    <span>58mm (Compacto)</span>
+                                    <input
+                                        type="radio"
+                                        disabled={config.imprime_ticket === 0}
+                                        checked={config.formato_ticket === 1}
+                                        onChange={() => setConfig({ ...config, formato_ticket: 1 })}
+                                    />
+                                </label>
+
+                                <label className="flex items-center justify-between p-2 rounded-md hover:bg-gray-100 cursor-pointer">
+                                    <span>80mm (Más amplio)</span>
+                                    <input
+                                        type="radio"
+                                        disabled={config.imprime_ticket === 0}
+                                        checked={config.formato_ticket === 2}
+                                        onChange={() => setConfig({ ...config, formato_ticket: 2 })}
+                                    />
+                                </label>
+                            </div>
+                        </div>
+
+                        {/* BOTONES */}
+                        <div className="flex justify-end space-x-2">
+                            <button
+                                onClick={() => setShowConfigModal(false)}
+                                className="px-4 py-2 rounded-lg border text-gray-600 hover:bg-gray-100 transition"
+                            >
+                                Cancelar
+                            </button>
+
+                            <button
+                                onClick={async () => {
+                                    try {
+                                        if (config.imprime_ticket === 1 && !config.formato_ticket) {
+                                            showToast("Debes seleccionar un formato de ticket", "warning");
+                                            return;
+                                        }
+
+                                        const configToSave = {
+                                            imprime_ticket: config.imprime_ticket,
+                                            formato_ticket: config.imprime_ticket === 1 ? config.formato_ticket : null
+                                        };
+
+                                        await configuracion.update(configToSave);
+
+                                        const fresh = await configuracion.getConfig();
+                                        setConfig({
+                                            imprime_ticket: fresh.imprime_ticket ?? 0,
+                                            formato_ticket: fresh.formato_ticket ?? null
+                                        });
+
+                                        showToast("Configuración guardada correctamente", "success");
+
+                                        setShowConfigModal(false);
+                                    } catch (error) {
+                                        console.error("Error al guardar configuración:", error);
+                                        showToast(
+                                            getApiErrorMessage(error, "Error al guardar la configuración"),
+                                            "error"
+                                        );
+                                    }
+                                }}
+                                className="px-4 py-2 rounded-lg bg-[#FF6B35] text-white hover:bg-[#e55a2b] transition"
+                            >
+                                Guardar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            <ConfirmModal
+                open={orderToCancel !== null}
+                title="Anular pedido"
+                message={
+                    <>
+                        ¿Estás seguro de que querés anular este pedido?
+                        <br />
+                        <span className="text-red-500 font-medium">
+                Esta acción no se puede deshacer.
+            </span>
+                    </>
+                }
+                confirmText="Sí, anular"
+                confirmColor="red"
+                onConfirm={confirmCancelOrder}
+                onCancel={() => setOrderToCancel(null)}
+            />
         </div>
     );
 };

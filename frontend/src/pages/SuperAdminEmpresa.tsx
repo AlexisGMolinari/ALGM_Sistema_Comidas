@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { superAdmin } from '../contexts/api';
 import { useToast } from '../components/common/SimpleToast';
 import {getApiErrorMessage} from "../utils/apiErrors.ts";
+import {ConfirmModal} from "../components/common/ConfirmModal.tsx";
 
 interface Empresa {
     id: number;
@@ -21,7 +22,7 @@ export default function SuperAdminEmpresas() {
     const [showEditModal, setShowEditModal] = useState(false);
     const [empresaEdit, setEmpresaEdit] = useState<any>(null);
     const [localidades, setLocalidades] = useState<any[]>([]);
-
+    const [empresaToDelete, setEmpresaToDelete] = useState<number | null>(null);
 
     const cargarEmpresas = async () => {
         try {
@@ -81,13 +82,17 @@ export default function SuperAdminEmpresas() {
     };
 
     // Elimina la empresa si no tiene usuario asignado
-    const eliminarEmpresa = async (id: number) => {
-        if (!window.confirm('¿Seguro que deseas eliminar esta empresa?')) return;
+    const eliminarEmpresa = (id: number) => {
+        setEmpresaToDelete(id);
+    };
+
+    const confirmEliminarEmpresa = async () => {
+        if (!empresaToDelete) return;
 
         try {
-            await superAdmin.deleteEmpresa(id);
+            await superAdmin.deleteEmpresa(empresaToDelete);
 
-            setEmpresas(prev => prev.filter(e => e.id !== id));
+            setEmpresas(prev => prev.filter(e => e.id !== empresaToDelete));
             showToast('Empresa eliminada correctamente', 'success');
 
         } catch (error: any) {
@@ -96,9 +101,10 @@ export default function SuperAdminEmpresas() {
             } else {
                 showToast(getApiErrorMessage(error,'Error inesperado al eliminar la empresa'), 'error');
             }
+        } finally {
+            setEmpresaToDelete(null);
         }
     };
-
 
     if (loading) {
         return <div className="text-white">Cargando empresas...</div>;
@@ -135,8 +141,86 @@ export default function SuperAdminEmpresas() {
                 </div>
 
                 <div className="overflow-x-auto">
+
+                    {/* 📱 MOBILE */}
+                    <div className="grid grid-cols-1 gap-4 sm:hidden">
+                        {empresas.map((e) => (
+                            <div key={e.id} className="bg-white rounded-xl shadow-md p-4 space-y-3">
+
+                                {/* HEADER */}
+                                <div className="flex justify-between items-center">
+                                    <div>
+                                        <p className="text-sm text-gray-500">ID #{e.id}</p>
+                                        <h3 className="font-semibold text-gray-800">{e.nombre}</h3>
+                                    </div>
+
+                                    <span
+                                        className={`px-2 py-0.5 rounded text-xs font-medium ${
+                                            e.activa === 1
+                                                ? 'bg-green-100 text-green-800'
+                                                : 'bg-gray-200 text-gray-700'
+                                        }`}
+                                    >
+            {e.activa === 1 ? 'Activa' : 'Inactiva'}
+          </span>
+                                </div>
+
+                                {/* INFO */}
+                                <div className="text-sm text-gray-700 space-y-1">
+                                    <p>
+                                        <strong>Web:</strong>{' '}
+                                        {e.url_sitioweb ? (
+                                            <a
+                                                href={e.url_sitioweb}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-blue-600 underline break-all"
+                                            >
+                                                {e.url_sitioweb}
+                                            </a>
+                                        ) : (
+                                            '-'
+                                        )}
+                                    </p>
+
+                                    <p>
+                                        <strong>Admin:</strong> {e.nombre_usuario || 'Sin asignar'}
+                                    </p>
+                                </div>
+
+                                {/* ACCIONES */}
+                                <div className="grid grid-cols-3 gap-2 pt-2">
+                                    <button
+                                        onClick={() => navigate(`/superadmin/empresas/${e.id}/usuarios`)}
+                                        className="bg-cyan-600 text-white py-2 rounded-lg text-sm flex items-center justify-center"
+                                    >
+                                        <Users size={14} className="mr-1" />
+                                        Ver
+                                    </button>
+
+                                    <button
+                                        onClick={() => editarEmpresa(e.id)}
+                                        className="bg-blue-600 text-white py-2 rounded-lg text-sm flex items-center justify-center"
+                                    >
+                                        <Pencil size={14} className="mr-1" />
+                                        Editar
+                                    </button>
+
+                                    <button
+                                        onClick={() => eliminarEmpresa(e.id)}
+                                        className="bg-red-600 text-white py-2 rounded-lg text-sm flex items-center justify-center"
+                                    >
+                                        <Trash2 size={14} className="mr-1" />
+                                        Eliminar
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* 💻 DESKTOP */}
                     {empresas.length > 0 ? (
-                        <table className="min-w-full divide-y divide-gray-200">
+                        <table className="hidden sm:table min-w-full divide-y divide-gray-200">
                             <thead className="bg-gray-50">
                             <tr>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
@@ -153,13 +237,36 @@ export default function SuperAdminEmpresas() {
                                 <tr key={e.id} className="hover:bg-gray-50">
                                     <td className="px-6 py-4 text-sm text-gray-800">{e.id}</td>
                                     <td className="px-6 py-4 text-sm text-gray-800">{e.nombre}</td>
-                                    <td className="px-6 py-4 text-sm text-gray-700">{e.url_sitioweb || '-'}</td>
-                                    <td className="px-6 py-4 text-sm text-gray-700">{e.nombre_usuario || 'Sin asignar'}</td>
-                                    <td className="px-6 py-4 text-sm">
-                      <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${e.activa === 1 ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-700'}`}>
-                        {e.activa === 1 ? 'Activa' : 'Inactiva'}
-                      </span>
+
+                                    <td className="px-6 py-4 text-sm text-gray-700">
+                                        {e.url_sitioweb ? (
+                                            <a
+                                                href={e.url_sitioweb}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-blue-600 underline"
+                                            >
+                                                {e.url_sitioweb}
+                                            </a>
+                                        ) : (
+                                            '-'
+                                        )}
                                     </td>
+
+                                    <td className="px-6 py-4 text-sm text-gray-700">
+                                        {e.nombre_usuario || 'Sin asignar'}
+                                    </td>
+
+                                    <td className="px-6 py-4 text-sm">
+              <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
+                  e.activa === 1
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-gray-200 text-gray-700'
+              }`}>
+                {e.activa === 1 ? 'Activa' : 'Inactiva'}
+              </span>
+                                    </td>
+
                                     <td className="px-6 py-4 text-sm flex gap-2">
                                         <button
                                             onClick={() => navigate(`/superadmin/empresas/${e.id}/usuarios`)}
@@ -174,7 +281,6 @@ export default function SuperAdminEmpresas() {
                                         >
                                             <Pencil size={14} className="mr-1" /> Editar
                                         </button>
-
 
                                         <button
                                             onClick={() => eliminarEmpresa(e.id)}
@@ -192,6 +298,7 @@ export default function SuperAdminEmpresas() {
                             No hay empresas registradas
                         </div>
                     )}
+
                 </div>
             </div>
             {showEditModal && empresaEdit && (
@@ -252,7 +359,23 @@ export default function SuperAdminEmpresas() {
                     />
                 </Modal>
             )}
-
+            <ConfirmModal
+                open={empresaToDelete !== null}
+                title="Eliminar empresa"
+                message={
+                    <>
+                        ¿Seguro que deseas eliminar esta empresa?
+                        <br />
+                        <span className="text-red-500 font-medium">
+                Esta acción no se puede deshacer.
+            </span>
+                    </>
+                }
+                confirmText="Sí, eliminar"
+                confirmColor="red"
+                onConfirm={confirmEliminarEmpresa}
+                onCancel={() => setEmpresaToDelete(null)}
+            />
         </div>
     );
 }

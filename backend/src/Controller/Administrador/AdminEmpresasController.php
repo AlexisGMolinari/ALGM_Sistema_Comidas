@@ -118,7 +118,7 @@ class AdminEmpresasController extends AbstractController
     {
         $postValues = $requestValidator->getRestBody();
         $type->controloRegistro($postValues, 0);
-        $repository->createRegistro($postValues);
+        $repository->creoEmpresa($postValues);
         return $this->json([]);
     }
 

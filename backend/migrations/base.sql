@@ -325,3 +325,23 @@ ALTER TABLE `caja`
     CHANGE COLUMN `monto_final` `monto_final` DECIMAL(12,2) NULL DEFAULT NULL AFTER `monto_inicial`,
     CHANGE COLUMN `total_ventas` `total_ventas` DECIMAL(12,2) NOT NULL DEFAULT '0.00' AFTER `monto_final`,
     CHANGE COLUMN `total_gastos` `total_gastos` DECIMAL(12,2) NOT NULL DEFAULT '0.00' AFTER `total_ventas`;
+
+-- 16/04/2026
+CREATE TABLE `configuracion` (
+    `id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+    `empresa_id` INT(10) UNSIGNED NOT NULL,
+    `imprime_ticket` TINYINT(3) UNSIGNED NOT NULL,
+    `formato_ticket` TINYINT(4) NULL DEFAULT NULL,
+    PRIMARY KEY (`id`) USING BTREE,
+    INDEX `empresa_id` (`empresa_id`) USING BTREE,
+    CONSTRAINT `FKconfiguro_empresa` FOREIGN KEY (`empresa_id`) REFERENCES `empresa` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION
+)
+COLLATE='utf8mb4_unicode_ci'
+ENGINE=InnoDB;
+
+-- Insertar la configuración a todas las empresas
+INSERT INTO configuracion (empresa_id, imprime_ticket, formato_ticket)
+SELECT e.id, 0, NULL
+FROM empresa e
+LEFT JOIN configuracion c ON c.empresa_id = e.id
+WHERE c.empresa_id IS NULL;

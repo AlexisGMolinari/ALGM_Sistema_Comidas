@@ -74,6 +74,12 @@ export interface CashRegister {
   };
 }
 
+export interface Configuracion {
+  id: number;
+  imprime_ticket: number;
+  formato_ticket?: number | null;
+}
+
 export interface CierreCajaPayload {
   id: number;
   monto_final: number;

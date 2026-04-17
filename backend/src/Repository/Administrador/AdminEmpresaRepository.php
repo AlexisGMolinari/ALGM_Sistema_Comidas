@@ -2,6 +2,7 @@
 
 namespace App\Repository\Administrador;
 
+use App\Repository\Administrador\Configuracion\ConfiguracionRepository;
 use App\Repository\Configuracion\UsuarioRepository;
 use App\Repository\Empresa\Clientes\ClienteRepository;
 use App\Repository\Paginador;
@@ -111,5 +112,23 @@ class AdminEmpresaRepository extends TablasSimplesAbstract
             throw new HttpException(400, "La empresa no puede ser eliminada porque tiene usuarios asociados.");
         }
         $this->deleteRegistro($id);
+    }
+
+    /**
+     * @param array $postValues
+     * @return void
+     * @throws Exception
+     */
+    public function creoEmpresa(array $postValues): void
+    {
+        $this->connection->beginTransaction();
+        $lastId = $this->createRegistro($postValues);
+        $arr = [
+            'empresa_id' => $lastId,
+            'imprime_ticket' => 0,
+            'formato_ticket' => null
+        ];
+        (new ConfiguracionRepository($this->connection, $this->security))->create($arr);
+        $this->connection->commit();
     }
 }

@@ -143,53 +143,48 @@ export default function SuperAdminLocalidades() {
                     </h2>
                 </div>
 
-                <div className="overflow-x-auto">
-                    {localidades.length > 0 ? (
-                        <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
-                            <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nombre</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Acciones</th>
-                            </tr>
-                            </thead>
+                <div className="grid grid-cols-1 gap-4 sm:hidden">
+                    {localidades.map((e) => (
+                        <div key={e.id} className="bg-white rounded-xl shadow-md p-4 space-y-3">
 
-                            <tbody className="bg-white divide-y divide-gray-200">
-                            {localidades.map(e => (
-                                <tr key={e.id} className="hover:bg-gray-50">
-                                    <td className="px-6 py-4 text-sm text-gray-800">{e.id}</td>
-                                    <td className="px-6 py-4 text-sm text-gray-800">{e.nombre}</td>
-                                    <td className="px-6 py-4 text-sm">
-                                  <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${e.activo === 1 ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-700'}`}>
-                                    {e.activo === 1 ? 'Activa' : 'Inactiva'}
-                                  </span>
-                                    </td>
-                                    <td className="px-6 py-4 text-sm flex gap-2">
-                                        <button
-                                            onClick={() => editarLocalidad(e.id)}
-                                            className="px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center"
-                                        >
-                                            <Pencil size={14} className="mr-1" /> Editar
-                                        </button>
+                            {/* HEADER */}
+                            <div className="flex justify-between items-center">
+                                <div>
+                                    <p className="text-sm text-gray-500">ID #{e.id}</p>
+                                    <h3 className="font-semibold text-gray-800">{e.nombre}</h3>
+                                </div>
 
+                                <span
+                                    className={`px-2 py-0.5 rounded text-xs font-medium ${
+                                        e.activo === 1
+                                            ? 'bg-green-100 text-green-800'
+                                            : 'bg-gray-200 text-gray-700'
+                                    }`}
+                                >
+                    {e.activo === 1 ? 'Activa' : 'Inactiva'}
+                </span>
+                            </div>
 
-                                        <button
-                                            onClick={() => eliminarLocalidad(e.id)}
-                                            className="px-3 py-1 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center"
-                                        >
-                                            <Trash2 size={14} className="mr-1" /> Eliminar
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
-                            </tbody>
-                        </table>
-                    ) : (
-                        <div className="p-6 text-center text-gray-500">
-                            No hay Localidades registradas
+                            {/* ACCIONES */}
+                            <div className="grid grid-cols-2 gap-2 pt-2">
+                                <button
+                                    onClick={() => editarLocalidad(e.id)}
+                                    className="bg-blue-600 text-white py-2 rounded-lg text-sm flex items-center justify-center"
+                                >
+                                    <Pencil size={14} className="mr-1" />
+                                    Editar
+                                </button>
+
+                                <button
+                                    onClick={() => eliminarLocalidad(e.id)}
+                                    className="bg-red-600 text-white py-2 rounded-lg text-sm flex items-center justify-center"
+                                >
+                                    <Trash2 size={14} className="mr-1" />
+                                    Eliminar
+                                </button>
+                            </div>
                         </div>
-                    )}
+                    ))}
                 </div>
             </div>
             {showEditModal && localidadEdit && (

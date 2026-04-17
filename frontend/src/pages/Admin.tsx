@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, X, Check, Pencil } from 'lucide-react';
 import { useToast } from '../components/common/SimpleToast';
 import { auth } from "../contexts/api.ts";
+import {ConfirmModal} from "../components/common/ConfirmModal.tsx";
 
 // Modal simple inline (puedes luego reemplazar por tu componente real)
 const Modal: React.FC<{ onClose: () => void; children: React.ReactNode }> = ({ onClose, children }) => (
@@ -39,6 +40,7 @@ const AdminPage: React.FC = () => {
     const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all');
     const [sortConfig, setSortConfig] = useState<SortConfig | null>(null);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
+    const [userToToggle, setUserToToggle] = useState<User | null>(null);
 
     // Modal
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -183,23 +185,24 @@ const AdminPage: React.FC = () => {
     };
 
     // ----------- Desactiva User ----------------
-    const toggleUserStatus = async (user: User) => {
-        const nuevoEstado = user.activo === 1 ? 0 : 1;
+    const toggleUserStatus = (user: User) => {
+        setUserToToggle(user);
+    };
 
-        const confirm = window.confirm(
-            `¿Seguro que deseas ${nuevoEstado ? 'activar' : 'desactivar'} a "${user.nombre}"?`
-        );
-        if (!confirm) return;
+    const confirmToggleUserStatus = async () => {
+        if (!userToToggle) return;
+
+        const nuevoEstado = userToToggle.activo === 1 ? 0 : 1;
 
         try {
-            await auth.updateUsuario(user.id, {
-                ...user,
+            await auth.updateUsuario(userToToggle.id, {
+                ...userToToggle,
                 activo: nuevoEstado,
             });
 
             setUsers(prev =>
                 prev.map(u =>
-                    u.id === user.id
+                    u.id === userToToggle.id
                         ? {
                             ...u,
                             activo: nuevoEstado,
@@ -216,9 +219,10 @@ const AdminPage: React.FC = () => {
         } catch (error) {
             console.error(error);
             showToast('No se pudo actualizar el estado del usuario', 'error');
+        } finally {
+            setUserToToggle(null);
         }
     };
-
 
     return (
         <div className="space-y-6">
@@ -270,56 +274,168 @@ const AdminPage: React.FC = () => {
 
                 {/* Tabla de usuarios */}
                 <div className="overflow-x-auto">
-                    {sortedUsers.length > 0 ? (
-                        <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
-                            <tr>
-                                <th onClick={() => handleSort('id')} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID {sortConfig?.key === 'id' ? (sortConfig.direction === 'asc' ? ' 🔼' : ' 🔽') : null}</th>
-                                <th onClick={() => handleSort('nombre')} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre {sortConfig?.key === 'nombre' ? (sortConfig.direction === 'asc' ? ' 🔼' : ' 🔽') : null}</th>
-                                <th onClick={() => handleSort('email')} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email {sortConfig?.key === 'email' ? (sortConfig.direction === 'asc' ? ' 🔼' : ' 🔽') : null}</th>
-                                <th onClick={() => handleSort('roles')} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rol {sortConfig?.key === 'roles' ? (sortConfig.direction === 'asc' ? ' 🔼' : ' 🔽') : null}</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
-                            </tr>
-                            </thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
-                            {sortedUsers.map(user => (
-                                <tr key={user.id} className="hover:bg-gray-50">
-                                    <td className="px-6 py-4 whitespace-nowrap text-gray-700">{user.id}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-gray-700">{user.nombre}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-gray-700">{user.email}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-gray-700">{user.roles}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-gray-700">
-                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${user.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                                                {user.status === 'active' ? 'Activo' : 'Inactivo'}
-                                            </span>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap space-x-2">
-                                        <button className="text-blue-500 hover:text-blue-700" onClick={() => openEditModal(user)}>
-                                            <Pencil size={16} />
-                                        </button>
-                                        <button
-                                            className={`hover:text-red-700 ${
-                                                user.activo === 1 ? 'text-red-500' : 'text-green-600'
-                                            }`}
-                                            onClick={() => toggleUserStatus(user)}
-                                            title={user.activo === 1 ? 'Desactivar usuario' : 'Activar usuario'}
-                                        >
-                                            {user.activo === 1 ? <X size={16} /> : <Check size={16} />}
-                                        </button>
 
-                                    </td>
+                    {sortedUsers.length > 0 ? (
+                        <>
+                            {/* 📱 MOBILE */}
+                            <div className="grid grid-cols-1 gap-4 sm:hidden">
+                                {sortedUsers.map((user) => (
+                                    <div
+                                        key={user.id}
+                                        className="bg-white rounded-xl shadow-md p-4 space-y-3"
+                                    >
+                                        {/* HEADER */}
+                                        <div className="flex justify-between items-center">
+              <span className="font-semibold text-gray-800">
+                {user.nombre}
+              </span>
+
+                                            <span className="text-xs text-gray-500">
+                ID: {user.id}
+              </span>
+                                        </div>
+
+                                        {/* INFO */}
+                                        <div className="text-sm text-gray-700 space-y-1">
+                                            <p><strong>Email:</strong> {user.email}</p>
+
+                                            <p>
+                                                <strong>Rol:</strong>{" "}
+                                                <span className="px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700">
+                  {user.roles}
+                </span>
+                                            </p>
+
+                                            <div className="flex items-center">
+                                                <strong className="mr-1">Estado:</strong>
+                                                <span
+                                                    className={`px-2 py-0.5 rounded text-xs font-medium ${
+                                                        user.status === 'active'
+                                                            ? 'bg-green-100 text-green-800'
+                                                            : 'bg-red-100 text-red-800'
+                                                    }`}
+                                                >
+                  {user.status === 'active' ? 'Activo' : 'Inactivo'}
+                </span>
+                                            </div>
+                                        </div>
+
+                                        {/* ACCIONES */}
+                                        <div className="grid grid-cols-2 gap-2 pt-2">
+                                            <button
+                                                onClick={() => openEditModal(user)}
+                                                className="bg-indigo-500 text-white py-2 rounded-lg text-sm flex items-center justify-center"
+                                            >
+                                                <Pencil size={14} className="mr-1" />
+                                                Editar
+                                            </button>
+
+                                            <button
+                                                onClick={() => toggleUserStatus(user)}
+                                                className={`py-2 rounded-lg text-sm flex items-center justify-center ${
+                                                    user.activo === 1
+                                                        ? 'bg-red-100 text-red-800'
+                                                        : 'bg-green-100 text-green-800'
+                                                }`}
+                                            >
+                                                {user.activo === 1 ? (
+                                                    <>
+                                                        <X size={14} className="mr-1" />
+                                                        Desactivar
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Check size={14} className="mr-1" />
+                                                        Activar
+                                                    </>
+                                                )}
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* 💻 DESKTOP */}
+                            <table className="hidden sm:table min-w-full divide-y divide-gray-200">
+                                <thead className="bg-gray-50">
+                                <tr>
+                                    <th onClick={() => handleSort('id')} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer">
+                                        ID {sortConfig?.key === 'id' ? (sortConfig.direction === 'asc' ? ' 🔼' : ' 🔽') : null}
+                                    </th>
+
+                                    <th onClick={() => handleSort('nombre')} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer">
+                                        Nombre {sortConfig?.key === 'nombre' ? (sortConfig.direction === 'asc' ? ' 🔼' : ' 🔽') : null}
+                                    </th>
+
+                                    <th onClick={() => handleSort('email')} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer">
+                                        Email {sortConfig?.key === 'email' ? (sortConfig.direction === 'asc' ? ' 🔼' : ' 🔽') : null}
+                                    </th>
+
+                                    <th onClick={() => handleSort('roles')} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer">
+                                        Rol {sortConfig?.key === 'roles' ? (sortConfig.direction === 'asc' ? ' 🔼' : ' 🔽') : null}
+                                    </th>
+
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Estado
+                                    </th>
+
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Acciones
+                                    </th>
                                 </tr>
-                            ))}
-                            </tbody>
-                        </table>
+                                </thead>
+
+                                <tbody className="bg-white divide-y divide-gray-200">
+                                {sortedUsers.map(user => (
+                                    <tr key={user.id} className="hover:bg-gray-50">
+                                        <td className="px-6 py-4 whitespace-nowrap text-gray-700">{user.id}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-gray-700">{user.nombre}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-gray-700">{user.email}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-gray-700">{user.roles}</td>
+
+                                        <td className="px-6 py-4 whitespace-nowrap text-gray-700">
+                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                    user.status === 'active'
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-red-100 text-red-800'
+                }`}>
+                  {user.status === 'active' ? 'Activo' : 'Inactivo'}
+                </span>
+                                        </td>
+
+                                        <td className="px-6 py-4 whitespace-nowrap space-x-2">
+                                            <button
+                                                className="text-blue-500 hover:text-blue-700"
+                                                onClick={() => openEditModal(user)}
+                                            >
+                                                <Pencil size={16} />
+                                            </button>
+
+                                            <button
+                                                className={`hover:text-red-700 ${
+                                                    user.activo === 1 ? 'text-red-500' : 'text-green-600'
+                                                }`}
+                                                onClick={() => toggleUserStatus(user)}
+                                                title={user.activo === 1 ? 'Desactivar usuario' : 'Activar usuario'}
+                                            >
+                                                {user.activo === 1 ? <X size={16} /> : <Check size={16} />}
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                                </tbody>
+                            </table>
+                        </>
                     ) : (
                         <div className="text-center py-10">
                             <X size={48} className="mx-auto text-gray-400" />
                             <h3 className="mt-4 text-lg font-medium text-gray-900">No hay usuarios</h3>
-                            <p className="mt-1 text-sm text-gray-500">No se encontraron usuarios con los filtros seleccionados.</p>
+                            <p className="mt-1 text-sm text-gray-500">
+                                No se encontraron usuarios con los filtros seleccionados.
+                            </p>
                         </div>
                     )}
+
                 </div>
             </div>
 
@@ -378,6 +494,27 @@ const AdminPage: React.FC = () => {
                     </div>
                 </Modal>
             )}
+
+            <ConfirmModal
+                open={userToToggle !== null}
+                title={userToToggle?.activo === 1 ? 'Desactivar usuario' : 'Activar usuario'}
+                message={
+                    <>
+                        ¿Seguro que deseas{' '}
+                        <strong>
+                            {userToToggle?.activo === 1 ? 'desactivar' : 'activar'}
+                        </strong>{' '}
+                        a{' '}
+                        <strong>"{userToToggle?.nombre}"</strong>?
+                    </>
+                }
+                confirmText={
+                    userToToggle?.activo === 1 ? 'Sí, desactivar' : 'Sí, activar'
+                }
+                confirmColor={userToToggle?.activo === 1 ? 'red' : 'green'}
+                onConfirm={confirmToggleUserStatus}
+                onCancel={() => setUserToToggle(null)}
+            />
         </div>
     );
 };

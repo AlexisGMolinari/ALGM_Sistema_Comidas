@@ -8,6 +8,7 @@ import { fetchExpenses, addExpense, updateExpense, deleteExpense, fetchExpenseCa
 import { Expense, Category } from '../types';
 import { useToast } from '../components/common/SimpleToast';
 import { getApiErrorMessage } from "../utils/apiErrors";
+import {ConfirmModal} from "../components/common/ConfirmModal.tsx";
 
 
 
@@ -44,6 +45,7 @@ const ExpensesPage: React.FC = () => {
   const [filterCategory, setFilterCategory] = useState<number | 'all'>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+  const [expenseToDelete, setExpenseToDelete] = useState<number | null>(null);
 
   useEffect(() => {
     const loadCategories = async () => {
@@ -105,10 +107,21 @@ const ExpensesPage: React.FC = () => {
   };
   
   // Function to delete an expense
-  const handleDeleteExpense = async (id: number) => {
-    if (confirm('¿Está seguro de eliminar este gasto?')) {
-      await deleteExpense(id);
-      setExpenses(expenses.filter(e => e.id !== id));
+  const handleDeleteExpense = (id: number) => {
+    setExpenseToDelete(id);
+  };
+  const confirmDeleteExpense = async () => {
+    if (!expenseToDelete) return;
+
+    try {
+      await deleteExpense(expenseToDelete);
+      setExpenses(prev => prev.filter(e => e.id !== expenseToDelete));
+      showToast('Gasto eliminado correctamente', 'success');
+    } catch (error) {
+      console.error('Error al eliminar gasto:', error);
+      showToast('No se pudo eliminar el gasto', 'error');
+    } finally {
+      setExpenseToDelete(null);
     }
   };
   
@@ -258,83 +271,155 @@ const ExpensesPage: React.FC = () => {
                 </div>
               </div>
             </div>
-            
+
             <div className="overflow-x-auto">
+
               {filteredExpenses.length > 0 ? (
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Fecha
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Descripción
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Categoría
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Monto
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Acciones
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {filteredExpenses.map((expense) => (
-                      <tr key={expense.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <Calendar size={16} className="text-gray-400 mr-2" />
-                            <div className="text-sm text-gray-900">{formatDate(new Date(expense.fecha))}</div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="text-sm text-gray-900">{expense.descripcion}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getCategoryColor(expense.categoria_id)}`}>
-                            {getCategoryName(expense.categoria_id)}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-red-600">{formatCurrency(expense.monto)}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <div className="flex space-x-3">
-                            <button
-                              onClick={() => handleEditExpense(expense)}
-                              className="text-indigo-600 hover:text-indigo-900"
-                            >
-                              <Edit size={16} />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteExpense(expense.id)}
-                              className="text-red-600 hover:text-red-900"
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          </div>
-                        </td>
+                  <>
+                    {/* 📱 MOBILE */}
+                    <div className="grid grid-cols-1 gap-4 sm:hidden">
+                      {filteredExpenses.map((expense) => {
+                        const categoryName = getCategoryName(expense.categoria_id);
+                        const categoryColor = getCategoryColor(expense.categoria_id);
+
+                        return (
+                            <div key={expense.id} className="bg-white rounded-xl shadow-md p-4 space-y-3">
+
+                              {/* HEADER */}
+                              <div className="flex justify-between items-center">
+                                <div className="flex items-center">
+                                  <Calendar size={16} className="text-gray-400 mr-2" />
+                                  <span className="text-sm text-gray-800 font-medium">
+                    {formatDate(new Date(expense.fecha))}
+                  </span>
+                                </div>
+
+                                <span className={`px-2 py-0.5 rounded text-xs font-medium ${categoryColor}`}>
+                  {categoryName}
+                </span>
+                              </div>
+
+                              {/* INFO */}
+                              <div className="text-sm text-gray-700 space-y-1">
+                                <p>
+                                  <strong>Descripción:</strong> {expense.descripcion}
+                                </p>
+
+                                <p className="text-red-600 font-semibold">
+                                  <strong>Monto:</strong> {formatCurrency(expense.monto)}
+                                </p>
+                              </div>
+
+                              {/* ACCIONES */}
+                              <div className="grid grid-cols-2 gap-2 pt-2">
+                                <button
+                                    onClick={() => handleEditExpense(expense)}
+                                    className="bg-indigo-500 text-white py-2 rounded-lg text-sm"
+                                >
+                                  ✏️ Editar
+                                </button>
+
+                                <button
+                                    onClick={() => handleDeleteExpense(expense.id)}
+                                    className="bg-red-500 text-white py-2 rounded-lg text-sm"
+                                >
+                                  🗑 Eliminar
+                                </button>
+                              </div>
+                            </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* 💻 DESKTOP */}
+                    <table className="hidden sm:table min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Fecha
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Descripción
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Categoría
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Monto
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Acciones
+                        </th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                      </thead>
+
+                      <tbody className="bg-white divide-y divide-gray-200">
+                      {filteredExpenses.map((expense) => (
+                          <tr key={expense.id} className="hover:bg-gray-50">
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="flex items-center">
+                                <Calendar size={16} className="text-gray-400 mr-2" />
+                                <div className="text-sm text-gray-900">
+                                  {formatDate(new Date(expense.fecha))}
+                                </div>
+                              </div>
+                            </td>
+
+                            <td className="px-6 py-4">
+                              <div className="text-sm text-gray-900">
+                                {expense.descripcion}
+                              </div>
+                            </td>
+
+                            <td className="px-6 py-4 whitespace-nowrap">
+                <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${getCategoryColor(expense.categoria_id)}`}>
+                  {getCategoryName(expense.categoria_id)}
+                </span>
+                            </td>
+
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm font-medium text-red-600">
+                                {formatCurrency(expense.monto)}
+                              </div>
+                            </td>
+
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                              <div className="flex space-x-3">
+                                <button
+                                    onClick={() => handleEditExpense(expense)}
+                                    className="text-indigo-600 hover:text-indigo-900"
+                                >
+                                  <Edit size={16} />
+                                </button>
+
+                                <button
+                                    onClick={() => handleDeleteExpense(expense.id)}
+                                    className="text-red-600 hover:text-red-900"
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                      ))}
+                      </tbody>
+                    </table>
+                  </>
               ) : (
-                <EmptyState
-                  title="No hay egresos registrados"
-                  description="Agregue nuevos egresos para visualizarlos aquí."
-                  icon={<FileText size={48} className="text-gray-400" />}
-                  action={{
-                    label: "Agregar Egreso",
-                    onClick: () => {
-                      resetForm();
-                      setShowExpenseModal(true);
-                    }
-                  }}
-                />
+                  <EmptyState
+                      title="No hay egresos registrados"
+                      description="Agregue nuevos egresos para visualizarlos aquí."
+                      icon={<FileText size={48} className="text-gray-400" />}
+                      action={{
+                        label: "Agregar Egreso",
+                        onClick: () => {
+                          resetForm();
+                          setShowExpenseModal(true);
+                        }
+                      }}
+                  />
               )}
+
             </div>
           </div>
         </div>
@@ -481,6 +566,23 @@ const ExpensesPage: React.FC = () => {
           </div>
         </div>
       )}
+      <ConfirmModal
+          open={expenseToDelete !== null}
+          title="Eliminar gasto"
+          message={
+            <>
+              ¿Está seguro de eliminar este gasto?
+              <br />
+              <span className="text-red-500 font-medium">
+                Esta acción no se puede deshacer.
+            </span>
+            </>
+          }
+          confirmText="Sí, eliminar"
+          confirmColor="red"
+          onConfirm={confirmDeleteExpense}
+          onCancel={() => setExpenseToDelete(null)}
+      />
     </div>
   );
 };

@@ -239,42 +239,107 @@ export default function SuperAdmin() {
                 </div>
 
                 <div className="overflow-x-auto">
-                    {empresas.length > 0 ? (
-                        <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
-                            <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nombre</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">URL Sitio</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Usuario</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Acción</th>
-                            </tr>
-                            </thead>
 
-                            <tbody className="bg-white divide-y divide-gray-200">
-                            {empresas.map((e) => (
-                                <tr
-                                    key={e.id}
-                                    className={`hover:bg-gray-50 ${
-                                        empresaId === e.id ? 'bg-orange-50' : ''
-                                    }`}
-                                >
-                                    <td className="px-6 py-4 text-sm text-gray-900">{e.id}</td>
-                                    <td className="px-6 py-4 text-sm text-gray-700">{e.nombre}</td>
-                                    <td className="px-6 py-4 text-sm text-gray-700">{e.url_sitioweb}</td>
-                                    <td className="px-6 py-4 text-sm text-gray-700">{e.nombre_usuario}</td>
-                                    <td className="px-6 py-4 text-sm">
-                                        <button
-                                            onClick={() => setEmpresaId(e.id)}
-                                            className="px-3 py-1 bg-[#FF6B35] text-white rounded-lg hover:bg-[#D6492C]"
-                                        >
-                                            Seleccionar
-                                        </button>
-                                    </td>
+                    {empresas.length > 0 ? (
+                        <>
+                            {/* 📱 MOBILE */}
+                            <div className="grid grid-cols-1 gap-4 sm:hidden">
+                                {empresas.map((e) => (
+                                    <div
+                                        key={e.id}
+                                        className={`bg-white rounded-xl shadow-md p-4 space-y-3 ${
+                                            empresaId === e.id ? 'bg-orange-50' : ''
+                                        }`}
+                                    >
+                                        {/* HEADER */}
+                                        <div className="flex justify-between items-center">
+                                          <span className="px-2 py-0.5 rounded font-bold bg-gray-100 text-red-600">
+                                              {e.nombre}
+                                            </span>
+
+                                            <span className="text-xs text-gray-500">
+                                                ID: {e.id}
+                                              </span>
+                                        </div>
+
+                                        {/* INFO */}
+                                        <div className="text-sm text-gray-700 space-y-1">
+                                            <p>
+                                                <strong>URL:</strong>{" "}
+                                                <a
+                                                    href={e.url_sitioweb}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="text-blue-600 underline"
+                                                >
+                                                    {e.url_sitioweb}
+                                                </a>
+                                            </p>
+
+                                            {/*<p>*/}
+                                            {/*    <strong>Usuario:</strong> {e.nombre_usuario}*/}
+                                            {/*</p>*/}
+                                        </div>
+
+                                        {/* ACCIÓN */}
+                                        <div>
+                                            <button
+                                                onClick={() => setEmpresaId(e.id)}
+                                                className="w-full px-3 py-2 bg-[#FF6B35] text-white rounded-lg hover:bg-[#D6492C]"
+                                            >
+                                                Seleccionar
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* 💻 DESKTOP */}
+                            <table className="hidden sm:table min-w-full divide-y divide-gray-200">
+                                <thead className="bg-gray-50">
+                                <tr>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nombre</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">URL Sitio</th>
+                                    {/*<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Usuario</th>*/}
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Acción</th>
                                 </tr>
-                            ))}
-                            </tbody>
-                        </table>
+                                </thead>
+
+                                <tbody className="bg-white divide-y divide-gray-200">
+                                {empresas.map((e) => (
+                                    <tr
+                                        key={e.id}
+                                        className={`hover:bg-gray-50 ${
+                                            empresaId === e.id ? 'bg-orange-50' : ''
+                                        }`}
+                                    >
+                                        <td className="px-6 py-4 text-sm text-gray-900">{e.id}</td>
+                                        <td className="px-6 py-4 text-sm text-gray-700">{e.nombre}</td>
+                                        <td className="px-6 py-4 text-sm text-gray-700">
+                                            <a
+                                                href={e.url_sitioweb}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-blue-600 underline"
+                                            >
+                                                {e.url_sitioweb}
+                                            </a>
+                                        </td>
+                                        {/*<td className="px-6 py-4 text-sm text-gray-700">{e.nombre_usuario}</td>*/}
+                                        <td className="px-6 py-4 text-sm">
+                                            <button
+                                                onClick={() => setEmpresaId(e.id)}
+                                                className="px-3 py-1 bg-[#FF6B35] text-white rounded-lg hover:bg-[#D6492C]"
+                                            >
+                                                Seleccionar
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                                </tbody>
+                            </table>
+                        </>
                     ) : (
                         <div className="p-6 text-center text-gray-500">
                             No hay empresas pendientes de asignación
@@ -292,51 +357,114 @@ export default function SuperAdmin() {
                 </div>
 
                 <div className="overflow-x-auto">
-                    {usuariosSinEmpresa.length > 0 ? (
-                        <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
-                            <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase">ID</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase">Nombre</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase">Email</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase">Rol</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase">Activo</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase">Acción</th>
-                            </tr>
-                            </thead>
 
-                            <tbody className="bg-white divide-y divide-gray-200">
-                            {usuariosSinEmpresa.map((u) => (
-                                <tr
-                                    key={u.id}
-                                    className={`hover:bg-gray-50 ${
-                                        usuarioId === u.id ? 'bg-orange-50' : ''
-                                    }`}
-                                >
-                                    <td className="px-6 py-4 text-sm text-gray-800">{u.id}</td>
-                                    <td className="px-6 py-4 text-sm text-gray-800">{u.nombre}</td>
-                                    <td className="px-6 py-4 text-sm text-gray-800">{u.email}</td>
-                                    <td className="px-6 py-4 text-sm text-gray-800">{u.roles}</td>
-                                    <td className="px-6 py-4 text-sm text-gray-800">
-                                        {u.activo === 1 ? 'Sí' : 'No'}
-                                    </td>
-                                    <td className="px-6 py-4 text-sm">
-                                        <button
-                                            onClick={() => setUsuarioId(u.id)}
-                                            className="px-3 py-1 bg-[#FF6B35] text-white rounded-lg hover:bg-[#D6492C]"
-                                        >
-                                            Seleccionar
-                                        </button>
-                                    </td>
+                    {usuariosSinEmpresa.length > 0 ? (
+                        <>
+                            {/* 📱 MOBILE */}
+                            <div className="grid grid-cols-1 gap-4 sm:hidden">
+                                {usuariosSinEmpresa.map((u) => (
+                                    <div
+                                        key={u.id}
+                                        className={`bg-white rounded-xl shadow-md p-4 space-y-3 ${
+                                            usuarioId === u.id ? 'bg-orange-50' : ''
+                                        }`}
+                                    >
+                                        {/* HEADER */}
+                                        <div className="flex justify-between items-center">
+                                          <span className="px-2 py-0.5 rounded font-bold bg-gray-100 text-violet-700">
+                                            {u.nombre}
+                                          </span>
+
+                                            <span className="text-xs text-gray-500">
+                                                ID: {u.id}
+                                              </span>
+                                        </div>
+
+                                        {/* INFO */}
+                                        <div className="text-sm text-gray-700 space-y-1">
+                                            <p><strong>Email:</strong> {u.email}</p>
+
+                                            <p>
+                                                <strong>Rol:</strong>{" "}
+                                                <span className="px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700">
+                                                  {u.roles}
+                                                </span>
+                                            </p>
+
+                                            <p>
+                                                <strong>Activo:</strong>{" "}
+                                                <span
+                                                    className={`px-2 py-0.5 rounded text-xs font-medium ${
+                                                        u.activo === 1
+                                                            ? 'bg-green-100 text-green-800'
+                                                            : 'bg-red-100 text-red-800'
+                                                    }`}
+                                                >
+                                                  {u.activo === 1 ? 'Sí' : 'No'}
+                                                </span>
+                                            </p>
+                                        </div>
+
+                                        {/* ACCIÓN */}
+                                        <div>
+                                            <button
+                                                onClick={() => setUsuarioId(u.id)}
+                                                className="w-full px-3 py-2 bg-[#FF6B35] text-white rounded-lg hover:bg-[#D6492C]"
+                                            >
+                                                Seleccionar
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* 💻 DESKTOP */}
+                            <table className="hidden sm:table min-w-full divide-y divide-gray-200">
+                                <thead className="bg-gray-50">
+                                <tr>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase">ID</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase">Nombre</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase">Email</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase">Rol</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase">Activo</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase">Acción</th>
                                 </tr>
-                            ))}
-                            </tbody>
-                        </table>
+                                </thead>
+
+                                <tbody className="bg-white divide-y divide-gray-200">
+                                {usuariosSinEmpresa.map((u) => (
+                                    <tr
+                                        key={u.id}
+                                        className={`hover:bg-gray-50 ${
+                                            usuarioId === u.id ? 'bg-orange-50' : ''
+                                        }`}
+                                    >
+                                        <td className="px-6 py-4 text-sm text-gray-800">{u.id}</td>
+                                        <td className="px-6 py-4 text-sm text-gray-800">{u.nombre}</td>
+                                        <td className="px-6 py-4 text-sm text-gray-800">{u.email}</td>
+                                        <td className="px-6 py-4 text-sm text-gray-800">{u.roles}</td>
+                                        <td className="px-6 py-4 text-sm text-gray-800">
+                                            {u.activo === 1 ? 'Sí' : 'No'}
+                                        </td>
+                                        <td className="px-6 py-4 text-sm">
+                                            <button
+                                                onClick={() => setUsuarioId(u.id)}
+                                                className="px-3 py-1 bg-[#FF6B35] text-white rounded-lg hover:bg-[#D6492C]"
+                                            >
+                                                Seleccionar
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                                </tbody>
+                            </table>
+                        </>
                     ) : (
                         <div className="p-6 text-center text-gray-500">
                             No hay usuarios pendientes de asignación
                         </div>
                     )}
+
                 </div>
             </div>
 

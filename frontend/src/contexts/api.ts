@@ -1,6 +1,8 @@
 import axios from 'axios';
-import { CashRegister, ExpenseAPIResponse, Category, Expense, CierreCajaPayload, Order,
-    Product, OrderItem, DailyReport, MonthlyReport, DailyReportItem, Comprobantes, DashboardResumen } from '../types';
+import {
+    CashRegister, ExpenseAPIResponse, Category, Expense, CierreCajaPayload, Order,
+    Product, OrderItem, DailyReport, MonthlyReport, DailyReportItem, Comprobantes, DashboardResumen, Configuracion
+} from '../types';
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://api-sistema-comidas.algm-webs.com/api';
 const BASE_URL = API_URL.replace(/\/api\/?$/, '');
@@ -96,6 +98,18 @@ export const auth = {
 
     updateUsuario: async (id: number, usuario: any) => {
         return await api.put(`/usuarios/${id}`, { usuario }).then(res => res.data);
+    },
+};
+
+export const configuracion = {
+
+    getConfig: async (): Promise<Configuracion> => {
+        const response = await api.get(`/admin/configuracion/`);
+        return response.data;
+    },
+
+    update: async (config: Partial<Configuracion>): Promise<void> => {
+        await api.put(`/admin/configuracion/`, config);
     },
 };
 

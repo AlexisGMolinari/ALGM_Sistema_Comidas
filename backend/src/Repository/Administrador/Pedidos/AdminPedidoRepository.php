@@ -255,7 +255,8 @@ class AdminPedidoRepository extends TablasSimplesAbstract
                         'pedido_id'   => $idPedido,
                         'producto_id' => $pid,
                         'precio'      => $newPrice,
-                        'cantidad'    => $newQty
+                        'cantidad'    => $newQty,
+                        'empresa_id'  => $empresa_id
                     ]);
                     // descontar stock por lo nuevo
                     $productoRepo->actualizoStock($pid, 2, $newQty, $empresa_id); // 2 = salida

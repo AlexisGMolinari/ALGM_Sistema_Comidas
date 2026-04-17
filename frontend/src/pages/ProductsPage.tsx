@@ -7,6 +7,7 @@ import useAuth from '../hooks/useAuth';
 import { products as productsApi, combos } from "../contexts/api.ts";
 import {useToast} from "../components/common/SimpleToast.tsx";
 import {getApiErrorMessage} from "../utils/apiErrors.ts";
+import {ConfirmModal} from "../components/common/ConfirmModal.tsx";
 
 
 // Utility function to format currency
@@ -60,7 +61,7 @@ const ProductsPage: React.FC = () => {
   const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
   const [stockMovementType, setStockMovementType] = useState<1 | 2>(1);
   const [stockMovementQty, setStockMovementQty] = useState('');
-
+  const [productToDisable, setProductToDisable] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -165,17 +166,25 @@ const ProductsPage: React.FC = () => {
   };
 
   // Function to delete a product
-  const handleDeleteProduct = async (id: number) => {
-    if (!confirm('¿Está seguro de desactivar este producto?')) return;
+  const handleDeleteProduct = (id: number) => {
+    setProductToDisable(id);
+  };
+
+  const confirmDisableProduct = async () => {
+    if (!productToDisable) return;
 
     try {
-      await productsApi.disable(id); // usa disable para deshabilitar
+      await productsApi.disable(productToDisable);
 
       const { data } = await productsApi.getAll();
       setProducts(data);
+
+      showToast('Producto desactivado correctamente', 'success');
     } catch (error) {
       console.error('Error al desactivar producto:', error);
       showToast('No se pudo desactivar el producto', 'error');
+    } finally {
+      setProductToDisable(null); // 👈 cierra modal
     }
   };
 
@@ -350,72 +359,162 @@ const ProductsPage: React.FC = () => {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
+
+          {/* 📱 MOBILE */}
+          <div className="grid grid-cols-1 gap-4 sm:hidden">
+            {filteredProducts.map((product) => {
+              const category = getCategoryData(product.categoria_prod_id);
+
+              return (
+                  <div key={product.id} className="bg-white rounded-xl shadow-md p-4 space-y-3">
+
+                    {/* HEADER */}
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center space-x-2">
+                        <Package size={18} className="text-gray-500" />
+                        <span className="font-semibold text-gray-800">
+                {product.nombre}
+              </span>
+                      </div>
+
+                      {product.activo === 0 && (
+                          <span className="px-2 py-0.5 rounded text-xs font-medium text-red-700 bg-red-100">
+                Inactivo
+              </span>
+                      )}
+                    </div>
+
+                    {/* INFO */}
+                    <div className="text-sm text-gray-700 space-y-1">
+                      <p><strong>Stock:</strong> {product.stock_actual}</p>
+
+                      <div className="flex items-center">
+                        <strong className="mr-1">Categoría:</strong>
+                        <span className={`px-2 py-0.5 rounded text-xs font-medium ${category.style}`}>
+                {category.name}
+              </span>
+                      </div>
+
+                      <p><strong>Precio:</strong> {formatCurrency(product.precio)}</p>
+                    </div>
+
+                    {/* ESTADO */}
+                    <div>
+                      <button
+                          onClick={() => toggleProductAvailability(product.id)}
+                          className={`w-full inline-flex justify-center items-center px-2.5 py-2 rounded-lg text-xs font-medium ${
+                              product.activo
+                                  ? 'bg-green-100 text-green-800'
+                                  : 'bg-red-100 text-red-800'
+                          }`}
+                      >
+                        {product.activo ? (
+                            <>
+                              <Check size={14} className="mr-1" />
+                              Disponible
+                            </>
+                        ) : (
+                            <>
+                              <X size={14} className="mr-1" />
+                              No disponible
+                            </>
+                        )}
+                      </button>
+                    </div>
+
+                    {/* ACCIONES */}
+                    {isAdmin && (
+                        <div className="grid grid-cols-2 gap-2 pt-2">
+                          <button
+                              onClick={() => handleEditProduct(product)}
+                              className="bg-indigo-500 text-white py-2 rounded-lg text-sm"
+                          >
+                            ✏️ Editar
+                          </button>
+
+                          <button
+                              onClick={() => handleDeleteProduct(product.id)}
+                              className="bg-red-500 text-white py-2 rounded-lg text-sm"
+                          >
+                            🗑 Eliminar
+                          </button>
+                        </div>
+                    )}
+                  </div>
+              );
+            })}
+          </div>
+
+          {/* 💻 DESKTOP (tu tabla original) */}
+          <table className="hidden sm:table min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
             <tr>
-              <th scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Producto
               </th>
-              <th scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Cantidad
               </th>
-              <th scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Categoría
               </th>
-              <th scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Precio
               </th>
-              <th scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Estado
               </th>
-              {/* Solo Admin ve las acciones*/}
               {isAdmin && (
-              <th scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Acciones
-              </th>
-                  )}
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Acciones
+                  </th>
+              )}
             </tr>
             </thead>
+
             <tbody className="bg-white divide-y divide-gray-200">
             {filteredProducts.map((product) => (
                 <tr key={product.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4">
                     <div className="flex items-center">
-                      <div
-                          className="h-10 w-10 flex-shrink-0 bg-gray-100 rounded-lg flex items-center justify-center">
+                      <div className="h-10 w-10 bg-gray-100 rounded-lg flex items-center justify-center">
                         <Package size={18} className="text-gray-500"/>
                       </div>
                       <div className="ml-4">
                         <div className="flex items-center space-x-2">
-                          <span className="text-sm font-medium text-gray-900">{product.nombre}</span>
+                  <span className="text-sm font-medium text-gray-900">
+                    {product.nombre}
+                  </span>
                           {product.activo === 0 && (
-                              <span className="ml-2 px-2 py-0.5 rounded text-xs font-medium text-red-700 bg-red-100">
-                                  Inactivo
-                                </span>
+                              <span className="px-2 py-0.5 rounded text-xs font-medium text-red-700 bg-red-100">
+                      Inactivo
+                    </span>
                           )}
                         </div>
                       </div>
                     </div>
                   </td>
+
                   <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{product.stock_actual}</div>
+                    <div className="text-sm font-medium text-gray-900">
+                      {product.stock_actual}
+                    </div>
                   </td>
+
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        getCategoryData(product.categoria_prod_id).style
-                    }`}>
-                      {getCategoryData(product.categoria_prod_id).name}
-                    </span>
+            <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                getCategoryData(product.categoria_prod_id).style
+            }`}>
+              {getCategoryData(product.categoria_prod_id).name}
+            </span>
                   </td>
+
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{formatCurrency(product.precio)}</div>
+                    <div className="text-sm font-medium text-gray-900">
+                      {formatCurrency(product.precio)}
+                    </div>
                   </td>
+
                   <td className="px-6 py-4 whitespace-nowrap">
                     <button
                         onClick={() => toggleProductAvailability(product.id)}
@@ -438,29 +537,31 @@ const ProductsPage: React.FC = () => {
                       )}
                     </button>
                   </td>
-                  {/* Solo Admin ve las acciones*/}
+
                   {isAdmin && (
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="flex space-x-3">
-                        <button
-                            onClick={() => handleEditProduct(product)}
-                            className="text-indigo-600 hover:text-indigo-900"
-                        >
-                          <Edit size={16}/>
-                        </button>
-                        <button
-                            onClick={() => handleDeleteProduct(product.id)}
-                            className="text-red-600 hover:text-red-900"
-                        >
-                          <Trash2 size={16}/>
-                        </button>
-                      </div>
-                    </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div className="flex space-x-3">
+                          <button
+                              onClick={() => handleEditProduct(product)}
+                              className="text-indigo-600 hover:text-indigo-900"
+                          >
+                            <Edit size={16}/>
+                          </button>
+
+                          <button
+                              onClick={() => handleDeleteProduct(product.id)}
+                              className="text-red-600 hover:text-red-900"
+                          >
+                            <Trash2 size={16}/>
+                          </button>
+                        </div>
+                      </td>
                   )}
                 </tr>
             ))}
             </tbody>
           </table>
+
         </div>
       </div>
 
@@ -687,7 +788,23 @@ const ProductsPage: React.FC = () => {
             </div>
           </div>
       )}
-
+      <ConfirmModal
+          open={productToDisable !== null}
+          title="Desactivar producto"
+          message={
+            <>
+              ¿Está seguro de desactivar este producto?
+              <br />
+              <span className="text-orange-500 font-medium">
+                El producto dejará de estar disponible para la venta.
+            </span>
+            </>
+          }
+          confirmText="Sí, desactivar"
+          confirmColor="orange"
+          onConfirm={confirmDisableProduct}
+          onCancel={() => setProductToDisable(null)}
+      />
     </div>
   );
 };
