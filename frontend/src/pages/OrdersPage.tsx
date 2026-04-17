@@ -1091,7 +1091,7 @@ const OrdersPage: React.FC = () => {
                         ) : filteredOrders.length > 0 ? (
                             <>
                                 {/* 📱 MOBILE VIEW */}
-                                <div className="grid grid-cols-1 gap-4 sm:hidden">
+                                <div className="grid grid-cols-1 gap-4 md:hidden">
                                     {sortedOrders.map((order) => (
                                         <div key={order.id} className="bg-white rounded-xl shadow-md p-4 space-y-3">
 

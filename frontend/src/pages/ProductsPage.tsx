@@ -361,7 +361,7 @@ const ProductsPage: React.FC = () => {
         <div className="overflow-x-auto">
 
           {/* 📱 MOBILE */}
-          <div className="grid grid-cols-1 gap-4 sm:hidden">
+          <div className="grid grid-cols-1 gap-4 md:hidden">
             {filteredProducts.map((product) => {
               const category = getCategoryData(product.categoria_prod_id);
 
@@ -446,7 +446,7 @@ const ProductsPage: React.FC = () => {
           </div>
 
           {/* 💻 DESKTOP (tu tabla original) */}
-          <table className="hidden sm:table min-w-full divide-y divide-gray-200">
+          <table className="hidden md:table min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">

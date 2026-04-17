@@ -143,7 +143,7 @@ export default function SuperAdminEmpresas() {
                 <div className="overflow-x-auto">
 
                     {/* 📱 MOBILE */}
-                    <div className="grid grid-cols-1 gap-4 sm:hidden">
+                    <div className="grid grid-cols-1 gap-4 md:hidden">
                         {empresas.map((e) => (
                             <div key={e.id} className="bg-white rounded-xl shadow-md p-4 space-y-3">
 
@@ -220,7 +220,7 @@ export default function SuperAdminEmpresas() {
 
                     {/* 💻 DESKTOP */}
                     {empresas.length > 0 ? (
-                        <table className="hidden sm:table min-w-full divide-y divide-gray-200">
+                        <table className="hidden md:table min-w-full divide-y divide-gray-200">
                             <thead className="bg-gray-50">
                             <tr>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>

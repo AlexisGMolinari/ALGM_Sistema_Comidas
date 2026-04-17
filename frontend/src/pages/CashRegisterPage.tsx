@@ -187,22 +187,22 @@ const CashRegisterPage: React.FC = () => {
             <div className="bg-cyan-700 rounded-xl shadow-md overflow-hidden">
               <div className="px-5 py-4 flex justify-between items-center border-b border-gray-200">
                 <h2 className="text-lg font-semibold text-white">Resumen de Caja</h2>
-                <div className="flex space-x-3">
-                  <button
-                    onClick={() => openMovementModal('in')}
-                    className="flex items-center px-4 py-3 bg-[#E6F9F7] text-[#2EC4B6] rounded-lg text-sm font-medium hover:bg-[#D1F5F2]"
-                  >
-                    <PlusCircle size={16} className="mr-1" />
-                    Ingreso
-                  </button>
-                  <button
-                    onClick={() => openMovementModal('out')}
-                    className="flex items-center px-4 py-3 bg-[#FFEDE5] text-[#FF6B35] rounded-lg text-sm font-medium hover:bg-[#FFE0D1]"
-                  >
-                    <MinusCircle size={16} className="mr-1" />
-                    Egreso
-                  </button>
-                </div>
+                {/*<div className="flex space-x-3">*/}
+                {/*  <button*/}
+                {/*    onClick={() => openMovementModal('in')}*/}
+                {/*    className="flex items-center px-4 py-3 bg-[#E6F9F7] text-[#2EC4B6] rounded-lg text-sm font-medium hover:bg-[#D1F5F2]"*/}
+                {/*  >*/}
+                {/*    <PlusCircle size={16} className="mr-1" />*/}
+                {/*    Ingreso*/}
+                {/*  </button>*/}
+                {/*  <button*/}
+                {/*    onClick={() => openMovementModal('out')}*/}
+                {/*    className="flex items-center px-4 py-3 bg-[#FFEDE5] text-[#FF6B35] rounded-lg text-sm font-medium hover:bg-[#FFE0D1]"*/}
+                {/*  >*/}
+                {/*    <MinusCircle size={16} className="mr-1" />*/}
+                {/*    Egreso*/}
+                {/*  </button>*/}
+                {/*</div>*/}
               </div>
 
               <div className="p-5">

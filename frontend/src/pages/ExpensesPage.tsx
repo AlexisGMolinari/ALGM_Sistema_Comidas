@@ -277,7 +277,7 @@ const ExpensesPage: React.FC = () => {
               {filteredExpenses.length > 0 ? (
                   <>
                     {/* 📱 MOBILE */}
-                    <div className="grid grid-cols-1 gap-4 sm:hidden">
+                    <div className="grid grid-cols-1 gap-4 md:hidden">
                       {filteredExpenses.map((expense) => {
                         const categoryName = getCategoryName(expense.categoria_id);
                         const categoryColor = getCategoryColor(expense.categoria_id);
@@ -332,7 +332,7 @@ const ExpensesPage: React.FC = () => {
                     </div>
 
                     {/* 💻 DESKTOP */}
-                    <table className="hidden sm:table min-w-full divide-y divide-gray-200">
+                    <table className="hidden md:table min-w-full divide-y divide-gray-200">
                       <thead className="bg-gray-50">
                       <tr>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">

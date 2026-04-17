@@ -143,7 +143,7 @@ export default function SuperAdminLocalidades() {
                     </h2>
                 </div>
 
-                <div className="grid grid-cols-1 gap-4 sm:hidden">
+                <div className="grid grid-cols-1 gap-4 md:hidden">
                     {localidades.map((e) => (
                         <div key={e.id} className="bg-white rounded-xl shadow-md p-4 space-y-3">
 
